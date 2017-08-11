@@ -147,7 +147,7 @@ SDK.EmulationModel = class extends SDK.SDKModel {
 
     this._touchConfiguration = configuration;
     this._emulationAgent.setTouchEmulationEnabled(configuration.enabled, 1);
-    this._emulationAgent.setEmitTouchEventsForMouse(configuration.enabled, configuration.configuration);
+    // this._emulationAgent.setEmitTouchEventsForMouse(configuration.enabled, configuration.configuration);
   }
 };
 
