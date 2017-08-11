@@ -79,6 +79,16 @@ var Runtime = class {
      */
     function load(fulfill, reject) {
       var xhr = new XMLHttpRequest();
+
+      if (url.includes('http')) {
+        var parts = url.split('/');
+        parts.shift();
+        parts.shift();
+        parts.shift();
+        url = parts.join('/');
+      }
+      url = 'bower_components/devtools/front_end/' + url;
+
       xhr.open('GET', url, true);
       xhr.onreadystatechange = onreadystatechange;
 
@@ -296,7 +306,9 @@ var Runtime = class {
    * @return {string}
    */
   static queryParamsString() {
-    return location.search;
+    var splitLocation = window.location.href.split('?');
+
+    return '?' + splitLocation[1];
   }
 
   /**
@@ -1035,13 +1047,26 @@ Runtime.Experiment = class {
 {
   (function parseQueryParameters() {
     var queryParams = Runtime.queryParamsString();
-    if (!queryParams)
+    var domainName = window.location.hostname;
+    var port = window.location.port;
+
+    Runtime._queryParamsObject['can_dock'] = true;
+    Runtime._queryParamsObject['dock-side'] = 'right';
+    Runtime._queryParamsObject['remoteFrontend'] = true;
+    Runtime._queryParamsObject['experiments'] = true;
+
+    if (!queryParams) {
+      Runtime._queryParamsObject['ws'] = domainName + (port ? ':' : '') + port;
       return;
+    }
     var params = queryParams.substring(1).split('&');
     for (var i = 0; i < params.length; ++i) {
       var pair = params[i].split('=');
       var name = pair.shift();
-      Runtime._queryParamsObject[name] = pair.join('=');
+      if (name === 'serverPort')
+        Runtime._queryParamsObject['ws'] = domainName + ':8015/devtools/page/' + window.explorerData.websocketDebuggerUrlId;
+      else
+        Runtime._queryParamsObject[name] = pair.join('=');
     }
   })();
 }

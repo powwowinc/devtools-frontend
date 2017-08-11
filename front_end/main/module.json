@@ -311,7 +311,7 @@
             "title": "Panel layout:",
             "settingName": "sidebarPosition",
             "settingType": "enum",
-            "defaultValue": "auto",
+            "defaultValue": "bottom",
             "options": [
                 {
                     "title": "Use horizontal panel layout",

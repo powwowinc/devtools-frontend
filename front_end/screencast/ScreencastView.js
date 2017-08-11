@@ -130,6 +130,7 @@ Screencast.ScreencastView = class extends UI.VBox {
         'jpeg', 80, Math.floor(Math.min(maxImageDimension, dimensions.width)),
         Math.floor(Math.min(maxImageDimension, dimensions.height)), undefined, this._screencastFrame.bind(this),
         this._screencastVisibilityChanged.bind(this));
+    window.document.dispatchEvent(new CustomEvent('SCREENCAST_INITIALIZED'));
     for (var emulationModel of SDK.targetManager.models(SDK.EmulationModel))
       emulationModel.overrideEmulateTouch(true);
     if (this._overlayModel)
@@ -373,6 +374,8 @@ Screencast.ScreencastView = class extends UI.VBox {
     var canvasHeight = this._canvasElement.getBoundingClientRect().height;
     this._canvasElement.width = window.devicePixelRatio * canvasWidth;
     this._canvasElement.height = window.devicePixelRatio * canvasHeight;
+
+    window.document.dispatchEvent(new CustomEvent('SCREENCAST_RESIZED'));
 
     this._context.save();
     this._context.scale(window.devicePixelRatio, window.devicePixelRatio);

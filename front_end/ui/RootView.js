@@ -17,10 +17,23 @@ UI.RootView = class extends UI.VBox {
    * @param {!Document} document
    */
   attachToDocument(document) {
-    document.defaultView.addEventListener('resize', this.doResize.bind(this), false);
-    this._window = document.defaultView;
+    if (document.defaultView) {
+      document.defaultView.addEventListener('resize', this.doResize.bind(this), false);
+      this._window = document.defaultView;
+    } else {
+      document.addEventListener('resize', this.doResize.bind(this), false);
+      this._window = document;
+    }
+    
     this.doResize();
-    this.show(/** @type {!Element} */ (document.body));
+
+    if (document.body) {
+      this.show(/** @type {!Element} */ (document.body.querySelector('#domInspector')));
+    } else {
+      this.show(/** @type {!Element} */ document);
+    }
+    // this.show(/** @type {!Element} */ document);
+    
   }
 
   /**
