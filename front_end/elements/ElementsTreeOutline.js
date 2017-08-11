@@ -643,7 +643,14 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
     if (treeElement.node().nodeName() === 'BODY' || treeElement.node().nodeName() === 'HEAD')
       return false;
 
+    var attributes = treeElement._node._attributesMap;
+
+    _.each(attributes, attr => {
+      delete attr._node;
+    });
+
     event.dataTransfer.setData('text/plain', treeElement.listItemElement.textContent.replace(/\u200b/g, ''));
+    event.dataTransfer.setData('type_devtools/attrs', JSON.stringify(attributes));
     event.dataTransfer.effectAllowed = 'copyMove';
     this._treeElementBeingDragged = treeElement;
 
