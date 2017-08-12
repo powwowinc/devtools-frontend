@@ -24,16 +24,16 @@ UI.RootView = class extends UI.VBox {
       document.addEventListener('resize', this.doResize.bind(this), false);
       this._window = document;
     }
-    
+
     this.doResize();
 
     if (document.body) {
-      this.show(/** @type {!Element} */ (document.body.querySelector('#domInspector')));
+      var shadowRoot = document.body.querySelector('#domInspector').shadowRoot;
+      var rootDiv = shadowRoot.querySelector('div');
+      this.show(/** @type {!Element} */ rootDiv);
     } else {
       this.show(/** @type {!Element} */ document);
     }
-    // this.show(/** @type {!Element} */ document);
-    
   }
 
   /**

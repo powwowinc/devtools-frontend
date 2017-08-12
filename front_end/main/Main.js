@@ -179,7 +179,10 @@ Main.Main = class {
     UI.initializeUIUtils(document, themeSetting);
     themeSetting.addChangeListener(Components.reload.bind(Components));
 
-    UI.installComponentRootStyles(/** @type {!Element} */ (document.body));
+    var shadowRoot = document.body.querySelector('#domInspector').createShadowRoot();
+    var rootDiv = document.createElement('div');
+    shadowRoot.appendChild(rootDiv);
+    UI.installComponentRootStyles(/** @type {!Element} */ (rootDiv));
 
     this._addMainEventListeners(document);
 

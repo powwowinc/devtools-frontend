@@ -54,7 +54,9 @@ Screencast.ScreencastApp = class {
     this._toggleButton.setEnabled(true);
     this._screencastView = new Screencast.ScreencastView(screenCaptureModel);
 
-    this.presentUI(document.body.querySelector('#domInspector'));
+    var shadowRoot = document.body.querySelector('#domInspector').shadowRoot;
+    var rootDiv = shadowRoot.querySelector('div');
+    this.presentUI(rootDiv);
 
     this._rootSplitWidget.setMainWidget(this._screencastView);
     this._screencastView.initialize();
