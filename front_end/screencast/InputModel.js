@@ -92,6 +92,8 @@ Screencast.InputModel = class extends SDK.SDKModel {
     }
     if (event.type === 'mouseup')
       this._activeTouchOffsetTop = null;
+    if (event.type === 'mouseup' || event.type === 'mousedown')
+      params.clickCount = 1;
     this._inputAgent.invoke_emulateTouchFromMouseEvent(params);
   }
 
