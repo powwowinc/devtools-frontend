@@ -863,8 +863,11 @@ Runtime.Extension = class {
     var constructorFunction = self.eval(/** @type {string} */ (className));
     if (!(constructorFunction instanceof Function))
       throw new Error('Could not instantiate: ' + className);
-    if (this._className)
+    if (this._className) {
+      if (className === 'Elements.ElementsPanel')
+        window.document.dispatchEvent(new CustomEvent('ELEMENTS_PANEL_CONSTRUCTED'));
       return this._module._manager.sharedInstance(constructorFunction);
+    }
     return new constructorFunction(this);
   }
 

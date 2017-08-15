@@ -20,8 +20,10 @@ Screencast.ScreencastApp = class {
    * @return {!Screencast.ScreencastApp}
    */
   static _instance() {
-    if (!Screencast.ScreencastApp._appInstance)
+    if (!Screencast.ScreencastApp._appInstance) {
       Screencast.ScreencastApp._appInstance = new Screencast.ScreencastApp();
+      window.document.dispatchEvent(new CustomEvent('SCREENCAST_APP_CONSTRUCTED'));
+    }
     return Screencast.ScreencastApp._appInstance;
   }
 

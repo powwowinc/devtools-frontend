@@ -87,8 +87,6 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
     this._domModel.addEventListener(SDK.DOMModel.Events.MarkersChanged, this._markersChanged, this);
     this._showHTMLCommentsSetting = Common.moduleSetting('showHTMLComments');
     this._showHTMLCommentsSetting.addChangeListener(this._onShowHTMLCommentsChange.bind(this));
-
-    window.document.dispatchEvent(new CustomEvent('TREEOUTLINE_CONSTRUCTED'));
   }
 
   /**

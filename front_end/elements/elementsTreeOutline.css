@@ -335,6 +335,10 @@ li.selected {
     z-index: 0;
 }
 
+li.hovered {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
 li.hovered:not(.always-parent) + ol.children, .elements-tree-outline ol.shadow-root, li.selected:not(.always-parent) + ol.children {
     margin-left: 5px;
     -webkit-padding-start: 6px;
