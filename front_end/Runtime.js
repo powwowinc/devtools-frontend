@@ -275,6 +275,9 @@ var Runtime = class {
           moduleDescriptors[i].remote = configuration[i]['type'] === 'remote';
         }
         self.runtime = new Runtime(moduleDescriptors);
+
+        // window.document.dispatchEvent('RUNTIME_CONSTRUCTED');
+
         if (coreModuleNames)
           return /** @type {!Promise<undefined>} */ (self.runtime._loadAutoStartModules(coreModuleNames));
         return Promise.resolve();

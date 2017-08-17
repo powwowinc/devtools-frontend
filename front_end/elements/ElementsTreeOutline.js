@@ -643,14 +643,15 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
     if (treeElement.node().nodeName() === 'BODY' || treeElement.node().nodeName() === 'HEAD')
       return false;
 
-    var attributes = treeElement._node._attributesMap;
+    var attributes = treeElement._node._attributes;
 
-    _.each(attributes, attr => {
-      delete attr._node;
+    var attrsArr = [];
+    attributes.forEach(attr => {
+      attrsArr.push(attr.name, attr.value);
     });
 
     event.dataTransfer.setData('text/plain', treeElement.listItemElement.textContent.replace(/\u200b/g, ''));
-    event.dataTransfer.setData('type_devtools/attrs', JSON.stringify(attributes));
+    event.dataTransfer.setData('type_devtools/attrs', JSON.stringify(attrsArr));
     event.dataTransfer.effectAllowed = 'copyMove';
     this._treeElementBeingDragged = treeElement;
 

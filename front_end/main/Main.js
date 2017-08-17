@@ -69,6 +69,8 @@ Main.Main = class {
     console.timeStamp('Main._loaded');
     Runtime.setPlatform(Host.platform());
     InspectorFrontendHost.getPreferences(this._gotPreferences.bind(this));
+
+    window.document.dispatchEvent(new CustomEvent('MAIN_LOADED'));
   }
 
   /**

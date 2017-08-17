@@ -807,6 +807,7 @@ SDK.PageDispatcher = class {
    * @param {!Protocol.Page.FrameId} frameId
    */
   frameStoppedLoading(frameId) {
+    window.document.dispatchEvent(new CustomEvent('FRAME_STOPPED_LOADING'));
   }
 
   /**
