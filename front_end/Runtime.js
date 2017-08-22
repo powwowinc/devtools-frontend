@@ -1068,7 +1068,7 @@ Runtime.Experiment = class {
       var pair = params[i].split('=');
       var name = pair.shift();
       if (name === 'serverPort')
-        Runtime._queryParamsObject['ws'] = domainName + ':8015/devtools/page/' + window.explorerData.websocketDebuggerUrlId;
+        Runtime._queryParamsObject['ws'] = domainName + ':8015/devtools/page/' + window.explorerData.websocketDebuggerUrlId + '&token=' + localStorage.getItem('accessToken');
       else
         Runtime._queryParamsObject[name] = pair.join('=');
     }
