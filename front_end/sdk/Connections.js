@@ -117,7 +117,18 @@ SDK.WebSocketConnection = class {
     this._socket = new WebSocket(url);
     this._socket.onerror = this._onError.bind(this);
     this._socket.onopen = this._onOpen.bind(this);
-    this._socket.onmessage = messageEvent => params.onMessage.call(null, /** @type {string} */ (messageEvent.data));
+    this._socket.onmessage = messageEvent => {
+      params.onMessage.call(null, /** @type {string} */ (messageEvent.data));
+      var msgData = JSON.parse(messageEvent.data);
+      var eventName = 'EXPLORER_' + msgData.method;
+      var params = {
+        detail: {
+          params: msgData.params
+        }
+      };
+
+      window.document.dispatchEvent(new CustomEvent(eventName, params));
+    };
     this._socket.onclose = this._onClose.bind(this);
 
     this._onDisconnect = params.onDisconnect;
