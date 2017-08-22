@@ -1270,12 +1270,10 @@ SDK.DOMModel = class extends SDK.SDKModel {
    */
   _setDocument(payload) {
     this._idToDOMNode = {};
-    if (payload && 'nodeId' in payload) {
+    if (payload && 'nodeId' in payload)
       this._document = new SDK.DOMDocument(this, payload);
-    } else {
+    else
       this._document = null;
-      this.requestDocument();
-    }
     this.dispatchEventToListeners(SDK.DOMModel.Events.DocumentUpdated, this);
   }
 

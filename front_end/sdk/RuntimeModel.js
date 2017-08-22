@@ -138,8 +138,6 @@ SDK.RuntimeModel = class extends SDK.SDKModel {
         new SDK.ExecutionContext(this, context.id, context.name, context.origin, data['isDefault'], data['frameId']);
     this._executionContextById.set(executionContext.id, executionContext);
     this.dispatchEventToListeners(SDK.RuntimeModel.Events.ExecutionContextCreated, executionContext);
-
-    window.document.dispatchEvent(new CustomEvent('EXECUTION_CONTEXT_CREATED'));
   }
 
   /**
