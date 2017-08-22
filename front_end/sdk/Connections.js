@@ -121,13 +121,13 @@ SDK.WebSocketConnection = class {
       params.onMessage.call(null, /** @type {string} */ (messageEvent.data));
       var msgData = JSON.parse(messageEvent.data);
       var eventName = 'EXPLORER_' + msgData.method;
-      var params = {
+      var msgParams = {
         detail: {
           params: msgData.params
         }
       };
 
-      window.document.dispatchEvent(new CustomEvent(eventName, params));
+      window.document.dispatchEvent(new CustomEvent(eventName, msgParams));
     };
     this._socket.onclose = this._onClose.bind(this);
 
