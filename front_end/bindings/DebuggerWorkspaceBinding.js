@@ -67,8 +67,8 @@ Bindings.DebuggerWorkspaceBinding = class {
    * @return {!Bindings.DebuggerWorkspaceBinding.Location}
    */
   createLiveLocation(rawLocation, updateDelegate, locationPool) {
-    var modelData = this._debuggerModelToData.get(rawLocation.script().debuggerModel);
-    return modelData._createLiveLocation(rawLocation, updateDelegate, locationPool);
+    // var modelData = this._debuggerModelToData.get(rawLocation.script().debuggerModel);
+    // return modelData._createLiveLocation(rawLocation, updateDelegate, locationPool);
   }
 
   /**
@@ -395,7 +395,7 @@ Bindings.DebuggerWorkspaceBinding.StackTraceTopFrameLocation = class extends Bin
     this._current = null;
     this._locations = rawLocations.map(
         location => binding.createLiveLocation(location, this._scheduleUpdate.bind(this), locationPool));
-    this._updateLocation();
+    // this._updateLocation();
   }
 
   /**
@@ -403,7 +403,7 @@ Bindings.DebuggerWorkspaceBinding.StackTraceTopFrameLocation = class extends Bin
    * @return {?Workspace.UILocation}
    */
   uiLocation() {
-    return this._current.uiLocation();
+    // return this._current.uiLocation();
   }
 
   /**
