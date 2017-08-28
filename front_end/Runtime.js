@@ -87,7 +87,25 @@ var Runtime = class {
         parts.shift();
         url = parts.join('/');
       }
-      url = 'bower_components/devtools/front_end/' + url;
+      if (url === 'InspectorBackendCommands.js' || url === 'SupportedCSSProperties.js') {
+        var domainName = window.location.hostname;
+        var port = window.location.port;
+        var queryParams = Runtime.queryParamsString();
+        if (!queryParams) {
+          url = domainName + (port ? ':' : '') + port + '/' + url + '?commitHash=' + window.explorerData.commitHash;
+        } else {
+          var params = queryParams.substring(1).split('&');
+          for (var i = 0; i < params.length; ++i) {
+            var pair = params[i].split('=');
+            var name = pair.shift();
+            if (name === 'serverPort')
+              url = 'http://' + domainName + ':' + pair.join('=') + '/' + url + '?commitHash=' + window.explorerData.commitHash;
+          }
+        }
+
+      } else {
+        url = 'bower_components/devtools/front_end/' + url;
+      }
 
       xhr.open('GET', url, true);
       xhr.onreadystatechange = onreadystatechange;
