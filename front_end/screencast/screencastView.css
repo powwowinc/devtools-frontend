@@ -28,19 +28,21 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-.screencast {
+ .screencast {
     overflow: hidden;
 }
 
 .screencast-navigation {
     flex-direction: row;
     display: flex;
-    flex: 24px 0 0;
+    flex: 40px 0 0;
     position: relative;
     padding-left: 1px;
     border-bottom: 1px solid rgb(64%, 64%, 64%);
+    border-right: 1px solid rgb(64%, 64%, 64%);
     background-origin: padding-box;
     background-clip: padding-box;
+    background-color: rgb(90%, 90%, 90%);
 }
 
 .screencast-navigation button {
@@ -53,9 +55,18 @@
     background-origin: content-box;
     background-repeat: no-repeat;
     border: 1px solid transparent;
-    height: 23px;
+    height: 24px;
     padding: 2px;
-    width: 23px;
+    width: 24px;
+    margin-top: 6px;
+}
+
+.screencast-navigation button.fa.fa-code {
+    background-image: url(Images/devtools.png);
+    width: 32px;
+    height: 32px;
+    margin-top: 3px;
+    background-size: 97%;
 }
 
 .screencast-navigation button:hover {
@@ -85,7 +96,10 @@
 .screencast-navigation input {
     -webkit-flex: 1;
     margin: 2px;
-    max-height: 19px;
+    max-height: 40px;
+    height: 32px !important;
+    border-radius: 3px;
+    font-size: 15px;
 }
 
 .screencast-navigation .progress {
@@ -100,12 +114,8 @@
 
 .screencast-viewport {
     display: flex;
-    border: 1px solid #999;
-    border-radius: 20px;
     flex: none;
     padding: 20px;
-    margin: 10px;
-    background-color: #eee;
 }
 
 .screencast-canvas-container {
