@@ -371,8 +371,8 @@ Screencast.ScreencastView = class extends UI.VBox {
 
     var canvasWidth = this._canvasElement.getBoundingClientRect().width;
     var canvasHeight = this._canvasElement.getBoundingClientRect().height;
-    this._canvasElement.width = window.devicePixelRatio * canvasWidth;
-    this._canvasElement.height = window.devicePixelRatio * canvasHeight;
+    this._canvasElement.width = window.devicePixelRatio * canvasWidth - 57;
+    this._canvasElement.height = window.devicePixelRatio * canvasHeight - 55;
 
     window.document.dispatchEvent(new CustomEvent('SCREENCAST_RESIZED'));
 
