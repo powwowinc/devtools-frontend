@@ -467,7 +467,6 @@
             "location": "drawer-view",
             "id": "sources.search",
             "title": "Search",
-            "persistence": "closeable",
             "order": 100,
             "className": "Sources.AdvancedSearchView"
         },

@@ -28,7 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-.tabbed-pane {
+ .tabbed-pane {
     flex: auto;
     overflow: hidden;
 }
@@ -294,4 +294,36 @@
 .tabbed-pane-right-toolbar {
     margin-left: -4px;
     flex: none;
+}
+
+#tab-timeline {
+    display: none;
+}
+
+#tab-heap_profiler {
+    display: none;
+}
+
+#tab-security {
+    display: none;
+}
+
+#tab-audits2 {
+    display: none;
+}
+
+[id="tab-elements.domBreakpoints"] {
+    display: none;
+}
+
+[id="tab-elements.domProperties"] {
+    display: none;
+}
+
+.tabbed-pane-left-toolbar.toolbar {
+    display: none;
+}
+
+.tabbed-pane-right-toolbar.toolbar {
+    display: none;
 }

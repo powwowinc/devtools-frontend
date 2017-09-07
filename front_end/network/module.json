@@ -107,7 +107,6 @@
             "location": "drawer-view",
             "id": "network.config",
             "title": "Network conditions",
-            "persistence": "closeable",
             "order": 40,
             "className": "Network.NetworkConfigView",
             "tags": "disk cache, network throttling, useragent, user agent"
