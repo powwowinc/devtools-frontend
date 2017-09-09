@@ -21,7 +21,7 @@ UI.RootView = class extends UI.VBox {
       document.defaultView.addEventListener('resize', this.doResize.bind(this), false);
       this._window = document.defaultView;
     } else {
-      document.addEventListener('resize', this.doResize.bind(this), false);
+      window.document.addEventListener('BOTTOM_PANE_RESIZE', this.doResize.bind(this), false);
       this._window = document;
     }
 

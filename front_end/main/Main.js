@@ -254,7 +254,7 @@ Main.Main = class {
     var app = /** @type {!Common.AppProvider} */ (appProvider).createApp();
     // It is important to kick controller lifetime after apps are instantiated.
     Components.dockController.initialize();
-    app.presentUI(document);
+    app.presentUI(document.querySelector('#domInspector').shadowRoot.querySelector('div'));
 
     var toggleSearchNodeAction = UI.actionRegistry.action('elements.toggle-element-search');
     // TODO: we should not access actions from other modules.

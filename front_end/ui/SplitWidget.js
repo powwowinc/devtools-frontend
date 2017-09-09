@@ -470,11 +470,13 @@ UI.SplitWidget = class extends UI.Widget {
     var mainSizeValue = (this._totalSizeCSS - roundSizeCSS) + 'px';
     this._sidebarElement.style.flexBasis = sidebarSizeValue;
 
+    var topPaneHeight = document.querySelector('[ui-view="topPane"]').style.height;
+
     // Make both sides relayout boundaries.
     if (this._isVertical) {
       this._sidebarElement.style.width = sidebarSizeValue;
       this._mainElement.style.width = mainSizeValue;
-      this._sidebarElement.style.height = this._totalSizeOtherDimensionCSS + 'px';
+      this._sidebarElement.style.height = topPaneHeight;
       this._mainElement.style.height = this._totalSizeOtherDimensionCSS + 'px';
     } else {
       this._sidebarElement.style.height = sidebarSizeValue;
