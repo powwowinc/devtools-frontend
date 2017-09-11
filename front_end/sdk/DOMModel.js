@@ -1298,7 +1298,8 @@ SDK.DOMModel = class extends SDK.SDKModel {
     }
 
     var parent = this._idToDOMNode[parentId];
-    parent._setChildrenPayload(payloads);
+    if (parent)
+      parent._setChildrenPayload(payloads);
   }
 
   /**
