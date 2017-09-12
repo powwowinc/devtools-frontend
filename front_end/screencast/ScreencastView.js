@@ -554,10 +554,10 @@ Screencast.ScreencastView = class extends UI.VBox {
    * @return {!{width: number, height: number}}
    */
   _viewportDimensions() {
-    const gutterSize = 30;
+    const gutterSize = 0;
     const bordersSize = Screencast.ScreencastView._bordersSize;
     var width = this.element.offsetWidth - bordersSize - gutterSize;
-    var height = this.element.offsetHeight - bordersSize - gutterSize - Screencast.ScreencastView._navBarHeight;
+    var height = this.element.offsetHeight - bordersSize - 8 - Screencast.ScreencastView._navBarHeight;
     return {width: width, height: height};
   }
 
