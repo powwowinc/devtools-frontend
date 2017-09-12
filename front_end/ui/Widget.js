@@ -77,7 +77,7 @@ UI.Widget = class extends Common.Object {
 
   static __assert(condition, message) {
     if (!condition)
-      throw new Error(message);
+      console.log(message);
   }
 
   /**
