@@ -104,7 +104,7 @@ var Runtime = class {
         }
 
       } else {
-        url = 'bower_components/devtools/front_end/' + url;
+        url = 'scripts/devtools' + url;
       }
 
       xhr.open('GET', url, true);
@@ -1066,73 +1066,76 @@ Runtime.Experiment = class {
   }
 };
 
-{
-  (function parseQueryParameters() {
-    var queryParams = Runtime.queryParamsString();
-    var domainName = window.location.hostname;
-    var port = window.location.port;
-
-    Runtime._queryParamsObject['can_dock'] = true;
-    Runtime._queryParamsObject['dock-side'] = 'right';
-    Runtime._queryParamsObject['remoteFrontend'] = true;
-    Runtime._queryParamsObject['experiments'] = true;
-
-    if (!queryParams) {
-      Runtime._queryParamsObject['ws'] = domainName + (port ? ':' : '') + port;
-      return;
-    }
-    var params = queryParams.substring(1).split('&');
-    for (var i = 0; i < params.length; ++i) {
-      var pair = params[i].split('=');
-      var name = pair.shift();
-      if (name === 'serverPort')
-        Runtime._queryParamsObject['ws'] = domainName + ':8015/devtools/page/' + window.explorerData.websocketDebuggerUrlId + '&token=' + localStorage.getItem('accessToken');
-      else
-        Runtime._queryParamsObject[name] = pair.join('=');
-    }
-  })();
+window.runtimeInit = function() {
+  {
+    (function parseQueryParameters() {
+      var queryParams = Runtime.queryParamsString();
+      var domainName = window.location.hostname;
+      var port = window.location.port;
+  
+      Runtime._queryParamsObject['can_dock'] = true;
+      Runtime._queryParamsObject['dock-side'] = 'right';
+      Runtime._queryParamsObject['remoteFrontend'] = true;
+      Runtime._queryParamsObject['experiments'] = true;
+  
+      if (!queryParams) {
+        Runtime._queryParamsObject['ws'] = domainName + (port ? ':' : '') + port;
+        return;
+      }
+      var params = queryParams.substring(1).split('&');
+      for (var i = 0; i < params.length; ++i) {
+        var pair = params[i].split('=');
+        var name = pair.shift();
+        if (name === 'serverPort')
+          Runtime._queryParamsObject['ws'] = domainName + ':8015/devtools/page/' + window.explorerData.websocketDebuggerUrlId + '&token=' + localStorage.getItem('accessToken');
+        else
+          Runtime._queryParamsObject[name] = pair.join('=');
+      }
+    })();
+  }
+  
+  // This must be constructed after the query parameters have been parsed.
+  Runtime.experiments = new Runtime.ExperimentsSupport();
+  
+  /**
+   * @type {?string}
+   */
+  Runtime._remoteBase = Runtime.queryParam('remoteBase');
+  {
+    (function validateRemoteBase() {
+      var remoteBaseRegexp = /^https:\/\/chrome-devtools-frontend\.appspot\.com\/serve_file\/@[0-9a-zA-Z]+\/?$/;
+      if (Runtime._remoteBase && !remoteBaseRegexp.test(Runtime._remoteBase))
+        Runtime._remoteBase = null;
+    })();
+  }
+  
+  
+  /**
+   * @interface
+   */
+  function ServicePort() {
+  }
+  
+  ServicePort.prototype = {
+    /**
+     * @param {function(string)} messageHandler
+     * @param {function(string)} closeHandler
+     */
+    setHandlers(messageHandler, closeHandler) {},
+  
+    /**
+     * @param {string} message
+     * @return {!Promise<boolean>}
+     */
+    send(message) {},
+  
+    /**
+     * @return {!Promise<boolean>}
+     */
+    close() {}
+  };
+  
+  /** @type {!Runtime} */
+  var runtime;
 }
 
-// This must be constructed after the query parameters have been parsed.
-Runtime.experiments = new Runtime.ExperimentsSupport();
-
-/**
- * @type {?string}
- */
-Runtime._remoteBase = Runtime.queryParam('remoteBase');
-{
-  (function validateRemoteBase() {
-    var remoteBaseRegexp = /^https:\/\/chrome-devtools-frontend\.appspot\.com\/serve_file\/@[0-9a-zA-Z]+\/?$/;
-    if (Runtime._remoteBase && !remoteBaseRegexp.test(Runtime._remoteBase))
-      Runtime._remoteBase = null;
-  })();
-}
-
-
-/**
- * @interface
- */
-function ServicePort() {
-}
-
-ServicePort.prototype = {
-  /**
-   * @param {function(string)} messageHandler
-   * @param {function(string)} closeHandler
-   */
-  setHandlers(messageHandler, closeHandler) {},
-
-  /**
-   * @param {string} message
-   * @return {!Promise<boolean>}
-   */
-  send(message) {},
-
-  /**
-   * @return {!Promise<boolean>}
-   */
-  close() {}
-};
-
-/** @type {!Runtime} */
-var runtime;
