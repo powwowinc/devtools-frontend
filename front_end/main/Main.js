@@ -946,5 +946,3 @@ Main.ShowMetricsRulersSettingUI = class {
         Common.UIString('Show rulers'), Common.moduleSetting('showMetricsRulers'));
   }
 };
-
-new Main.Main();

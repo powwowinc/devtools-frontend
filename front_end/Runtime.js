@@ -104,7 +104,7 @@ var Runtime = class {
         }
 
       } else {
-        url = 'scripts/devtools' + url;
+        url = 'scripts/devtools/' + url;
       }
 
       xhr.open('GET', url, true);
@@ -327,7 +327,7 @@ var Runtime = class {
   static queryParamsString() {
     var splitLocation = window.location.href.split('?');
 
-    return '?' + splitLocation[1];
+    return splitLocation[1] ? '?' + splitLocation[1] : '';
   }
 
   /**
@@ -1079,7 +1079,7 @@ window.runtimeInit = function() {
       Runtime._queryParamsObject['experiments'] = true;
   
       if (!queryParams) {
-        Runtime._queryParamsObject['ws'] = domainName + (port ? ':' : '') + port;
+        Runtime._queryParamsObject['ws'] = domainName + ':8015/devtools/page/' + window.explorerData.websocketDebuggerUrlId + '?token=' + localStorage.getItem('accessToken');
         return;
       }
       var params = queryParams.substring(1).split('&');
@@ -1087,7 +1087,7 @@ window.runtimeInit = function() {
         var pair = params[i].split('=');
         var name = pair.shift();
         if (name === 'serverPort')
-          Runtime._queryParamsObject['ws'] = domainName + ':8015/devtools/page/' + window.explorerData.websocketDebuggerUrlId + '&token=' + localStorage.getItem('accessToken');
+          Runtime._queryParamsObject['ws'] = domainName + ':8015/devtools/page/' + window.explorerData.websocketDebuggerUrlId + '?token=' + localStorage.getItem('accessToken');
         else
           Runtime._queryParamsObject[name] = pair.join('=');
       }

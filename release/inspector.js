@@ -3,7 +3,7 @@ var allDescriptors=[{"dependencies":["ui","platform","common","cm"],"extensions"
 this._registerModule(descriptors[i]);}
 static loadResourcePromise(url){return new Promise(load);function load(fulfill,reject){var xhr=new XMLHttpRequest();if(url.includes('http')){var parts=url.split('/');parts.shift();parts.shift();parts.shift();url=parts.join('/');}
 if(url==='InspectorBackendCommands.js'||url==='SupportedCSSProperties.js'){var domainName=window.location.hostname;var port=window.location.port;var queryParams=Runtime.queryParamsString();if(!queryParams){url=domainName+(port?':':'')+port+'/'+url+'?commitHash='+window.explorerData.commitHash;}else{var params=queryParams.substring(1).split('&');for(var i=0;i<params.length;++i){var pair=params[i].split('=');var name=pair.shift();if(name==='serverPort')
-url='http://'+domainName+':'+pair.join('=')+'/'+url+'?commitHash='+window.explorerData.commitHash;}}}else{url='release/'+url;}
+url='http://'+domainName+':'+pair.join('=')+'/'+url+'?commitHash='+window.explorerData.commitHash;}}}else{url='scripts/devtools/'+url;}
 xhr.open('GET',url,true);xhr.onreadystatechange=onreadystatechange;function onreadystatechange(e){if(xhr.readyState!==XMLHttpRequest.DONE)
 return;if([0,200,304].indexOf(xhr.status)===-1)
 reject(new Error('While loading from url '+url+' server responded with a status of '+xhr.status));else
@@ -38,7 +38,7 @@ self.runtime=new Runtime(moduleDescriptors);if(coreModuleNames)
 return(self.runtime._loadAutoStartModules(coreModuleNames));return Promise.resolve();}}}
 static startWorker(appName){return Runtime.startApplication(appName).then(sendWorkerReady);function sendWorkerReady(){self.postMessage('workerReady');}}
 static queryParam(name){return Runtime._queryParamsObject[name]||null;}
-static queryParamsString(){var splitLocation=window.location.href.split('?');return'?'+splitLocation[1];}
+static queryParamsString(){var splitLocation=window.location.href.split('?');return splitLocation[1]?'?'+splitLocation[1]:'';}
 static _experimentsSetting(){try{return(JSON.parse(self.localStorage&&self.localStorage['experiments']?self.localStorage['experiments']:'{}'));}catch(e){console.error('Failed to parse localStorage[\'experiments\']');return{};}}
 static _assert(value,message){if(value)
 return;Runtime._originalAssert.call(Runtime._console,value,message+' '+new Error().stack);}
@@ -132,7 +132,7 @@ cleanedUpExperimentSetting[experimentName]=true;}
 this._setExperimentsSetting(cleanedUpExperimentSetting);}
 _checkExperiment(experimentName){Runtime._assert(this._experimentNames[experimentName],'Unknown experiment '+experimentName);}};Runtime.Experiment=class{constructor(experiments,name,title,hidden){this.name=name;this.title=title;this.hidden=hidden;this._experiments=experiments;}
 isEnabled(){return this._experiments.isEnabled(this.name);}
-setEnabled(enabled){this._experiments.setEnabled(this.name,enabled);}};window.runtimeInit=function(){{(function parseQueryParameters(){var queryParams=Runtime.queryParamsString();var domainName=window.location.hostname;var port=window.location.port;Runtime._queryParamsObject['can_dock']=true;Runtime._queryParamsObject['dock-side']='right';Runtime._queryParamsObject['remoteFrontend']=true;Runtime._queryParamsObject['experiments']=true;if(!queryParams){Runtime._queryParamsObject['ws']=domainName+(port?':':'')+port;return;}
+setEnabled(enabled){this._experiments.setEnabled(this.name,enabled);}};window.runtimeInit=function(){{(function parseQueryParameters(){var queryParams=Runtime.queryParamsString();var domainName=window.location.hostname;var port=window.location.port;Runtime._queryParamsObject['can_dock']=true;Runtime._queryParamsObject['dock-side']='right';Runtime._queryParamsObject['remoteFrontend']=true;Runtime._queryParamsObject['experiments']=true;if(!queryParams){Runtime._queryParamsObject['ws']=domainName+':8015/devtools/page/'+window.explorerData.websocketDebuggerUrlId+'?token='+localStorage.getItem('accessToken');return;}
 var params=queryParams.substring(1).split('&');for(var i=0;i<params.length;++i){var pair=params[i].split('=');var name=pair.shift();if(name==='serverPort')
 Runtime._queryParamsObject['ws']=domainName+':8015/devtools/page/'+window.explorerData.websocketDebuggerUrlId+'&token='+localStorage.getItem('accessToken');else
 Runtime._queryParamsObject[name]=pair.join('=');}})();}
@@ -4432,7 +4432,7 @@ _updateTouch(){var configuration={enabled:this._touchEnabled,configuration:this.
 configuration={enabled:true,configuration:'mobile'};if(this._overlayModel&&this._overlayModel.inspectModeEnabled())
 configuration={enabled:false,configuration:'mobile'};if(!this._touchConfiguration.enabled&&!configuration.enabled)
 return;if(this._touchConfiguration.enabled&&configuration.enabled&&this._touchConfiguration.configuration===configuration.configuration)
-return;this._touchConfiguration=configuration;this._emulationAgent.setTouchEmulationEnabled(configuration.enabled,configuration.configuration);}};SDK.SDKModel.register(SDK.EmulationModel,SDK.Target.Capability.Emulation,true);SDK.EmulationModel.Geolocation=class{constructor(latitude,longitude,error){this.latitude=latitude;this.longitude=longitude;this.error=error;}
+return;this._touchConfiguration=configuration;this._emulationAgent.setTouchEmulationEnabled(configuration.enabled,1);this._emulationAgent.setEmitTouchEventsForMouse(configuration.enabled,configuration.configuration);}};SDK.SDKModel.register(SDK.EmulationModel,SDK.Target.Capability.Emulation,true);SDK.EmulationModel.Geolocation=class{constructor(latitude,longitude,error){this.latitude=latitude;this.longitude=longitude;this.error=error;}
 static parseSetting(value){if(value){var splitError=value.split(':');if(splitError.length===2){var splitPosition=splitError[0].split('@');if(splitPosition.length===2){return new SDK.EmulationModel.Geolocation(parseFloat(splitPosition[0]),parseFloat(splitPosition[1]),splitError[1]);}}}
 return new SDK.EmulationModel.Geolocation(0,0,false);}
 static parseUserInput(latitudeString,longitudeString,errorStatus){if(!latitudeString&&!longitudeString)
