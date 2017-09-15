@@ -117,7 +117,7 @@ Screencast.ScreencastView = class extends UI.VBox {
       return;
     this._isCasting = true;
 
-    const maxImageDimension = 2048;
+    const maxImageDimension = 5048;
     var dimensions = this._viewportDimensions();
     if (dimensions.width < 0 || dimensions.height < 0) {
       this._isCasting = false;
