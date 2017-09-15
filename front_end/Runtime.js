@@ -104,7 +104,21 @@ var Runtime = class {
         }
 
       } else {
-        url = 'scripts/devtools/' + url;
+        var env = getParameterByName('env', window.location.href);
+        if (env === 'development')
+          url = 'bower_components/devtools/front_end/' + url;
+        else
+          url = 'scripts/devtools/' + url;
+
+        function getParameterByName(name, url) {
+          if (!url) url = window.location.href;
+          name = name.replace(/[\[\]]/g, "\\$&");
+          var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+              results = regex.exec(url);
+          if (!results) return null;
+          if (!results[2]) return '';
+          return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
       }
 
       xhr.open('GET', url, true);
@@ -1137,5 +1151,4 @@ window.runtimeInit = function() {
   
   /** @type {!Runtime} */
   var runtime;
-}
-
+};
