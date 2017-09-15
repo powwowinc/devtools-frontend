@@ -27,7 +27,7 @@ wasShown(){this._startCasting();}
 willHide(){this._stopCasting();}
 _startCasting(){if(SDK.targetManager.allTargetsSuspended())
 return;if(this._isCasting)
-return;this._isCasting=true;const maxImageDimension=2048;var dimensions=this._viewportDimensions();if(dimensions.width<0||dimensions.height<0){this._isCasting=false;return;}
+return;this._isCasting=true;const maxImageDimension=5048;var dimensions=this._viewportDimensions();if(dimensions.width<0||dimensions.height<0){this._isCasting=false;return;}
 dimensions.width*=window.devicePixelRatio;dimensions.height*=window.devicePixelRatio;this._screenCaptureModel.startScreencast('jpeg',80,Math.floor(Math.min(maxImageDimension,dimensions.width)),Math.floor(Math.min(maxImageDimension,dimensions.height)),undefined,this._screencastFrame.bind(this),this._screencastVisibilityChanged.bind(this));for(var emulationModel of SDK.targetManager.models(SDK.EmulationModel))
 emulationModel.overrideEmulateTouch(true);if(this._overlayModel)
 this._overlayModel.setHighlighter(this);}
