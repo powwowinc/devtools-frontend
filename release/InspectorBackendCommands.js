@@ -382,6 +382,7 @@ Protocol.inspectorBackend.registerCommand("ServiceWorker.updateRegistration", [{
 Protocol.inspectorBackend.registerCommand("ServiceWorker.startWorker", [{"name": "scopeURL", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("ServiceWorker.skipWaiting", [{"name": "scopeURL", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("ServiceWorker.stopWorker", [{"name": "versionId", "type": "string", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("ServiceWorker.stopAllWorkers", [], [], false);
 Protocol.inspectorBackend.registerCommand("ServiceWorker.inspectWorker", [{"name": "versionId", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("ServiceWorker.setForceUpdateOnPageLoad", [{"name": "forceUpdateOnPageLoad", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("ServiceWorker.deliverPushMessage", [{"name": "origin", "type": "string", "optional": false}, {"name": "registrationId", "type": "string", "optional": false}, {"name": "data", "type": "string", "optional": false}], [], false);
