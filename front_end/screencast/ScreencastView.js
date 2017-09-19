@@ -371,8 +371,8 @@ Screencast.ScreencastView = class extends UI.VBox {
 
     var canvasWidth = this._canvasElement.getBoundingClientRect().width;
     var canvasHeight = this._canvasElement.getBoundingClientRect().height;
-    this._canvasElement.width = window.devicePixelRatio * (canvasWidth - 41);
-    this._canvasElement.height = window.devicePixelRatio * (canvasHeight - 41);
+    this._canvasElement.width = window.devicePixelRatio * canvasWidth;
+    this._canvasElement.height = window.devicePixelRatio * canvasHeight;
 
     window.document.dispatchEvent(new CustomEvent('SCREENCAST_RESIZED'));
 
@@ -557,7 +557,7 @@ Screencast.ScreencastView = class extends UI.VBox {
     const gutterSize = 0;
     const bordersSize = Screencast.ScreencastView._bordersSize;
     var width = this.element.offsetWidth - bordersSize - gutterSize;
-    var height = this.element.offsetHeight - bordersSize - 8 - Screencast.ScreencastView._navBarHeight;
+    var height = this.element.offsetHeight - bordersSize - Screencast.ScreencastView._navBarHeight;
     return {width: width, height: height};
   }
 
@@ -680,9 +680,9 @@ Screencast.ScreencastView = class extends UI.VBox {
   }
 };
 
-Screencast.ScreencastView._bordersSize = 44;
+Screencast.ScreencastView._bordersSize = 1;
 
-Screencast.ScreencastView._navBarHeight = 29;
+Screencast.ScreencastView._navBarHeight = 40;
 
 Screencast.ScreencastView._HttpRegex = /^http:\/\/(.+)/;
 

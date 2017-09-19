@@ -158,6 +158,8 @@ UI.ResizerWidget = class extends Common.Object {
     this.dispatchEventToListeners(UI.ResizerWidget.Events.ResizeEnd);
     delete this._startX;
     delete this._startY;
+
+    window.document.dispatchEvent(new CustomEvent('DEVTOOLS_SPLITBAR_DRAG_END'));
   }
 };
 
