@@ -2005,7 +2005,7 @@ sendDragStart(x,y){this.dispatchEventToListeners(UI.ResizerWidget.Events.ResizeS
 _drag(event){if(!this._isEnabled){this._dragEnd(event);return true;}
 this.sendDragMove(this._startX,event.pageX,this._startY,event.pageY,event.shiftKey);event.preventDefault();return false;}
 sendDragMove(startX,currentX,startY,currentY,shiftKey){this.dispatchEventToListeners(UI.ResizerWidget.Events.ResizeUpdate,{startX:startX,currentX:currentX,startY:startY,currentY:currentY,shiftKey:shiftKey});}
-_dragEnd(event){this.dispatchEventToListeners(UI.ResizerWidget.Events.ResizeEnd);delete this._startX;delete this._startY;}};UI.ResizerWidget.Events={ResizeStart:Symbol('ResizeStart'),ResizeUpdate:Symbol('ResizeUpdate'),ResizeEnd:Symbol('ResizeEnd')};UI.SimpleResizerWidget=class extends UI.ResizerWidget{constructor(){super();this._isVertical=true;}
+_dragEnd(event){this.dispatchEventToListeners(UI.ResizerWidget.Events.ResizeEnd);delete this._startX;delete this._startY;window.document.dispatchEvent(new CustomEvent('DEVTOOLS_SPLITBAR_DRAG_END'));}};UI.ResizerWidget.Events={ResizeStart:Symbol('ResizeStart'),ResizeUpdate:Symbol('ResizeUpdate'),ResizeEnd:Symbol('ResizeEnd')};UI.SimpleResizerWidget=class extends UI.ResizerWidget{constructor(){super();this._isVertical=true;}
 isVertical(){return this._isVertical;}
 setVertical(vertical){this._isVertical=vertical;this.updateElementCursors();}
 cursor(){return this._isVertical?'ns-resize':'ew-resize';}
