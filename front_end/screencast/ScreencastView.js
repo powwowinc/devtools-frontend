@@ -650,7 +650,9 @@ Screencast.ScreencastView = class extends UI.VBox {
       return;
     if (!url.match(Screencast.ScreencastView._SchemeRegex))
       url = 'http://' + url;
-    this._resourceTreeModel.navigate(url);
+    this._resourceTreeModel.navigate(url).then(() => {
+      window.document.dispatchEvent(new CustomEvent('NAVIGATED_WITH_URL_BAR'));
+    });
     this._canvasElement.focus();
   }
 

@@ -96,7 +96,7 @@ _navigateReload(){this._resourceTreeModel.reloadPage();}
 _navigationUrlKeyUp(event){if(event.key!=='Enter')
 return;var url=this._navigationUrl.value;if(!url)
 return;if(!url.match(Screencast.ScreencastView._SchemeRegex))
-url='http://'+url;this._resourceTreeModel.navigate(url);this._canvasElement.focus();}
+url='http://'+url;this._resourceTreeModel.navigate(url).then(()=>{window.document.dispatchEvent(new CustomEvent('NAVIGATED_WITH_URL_BAR'));});this._canvasElement.focus();}
 async _requestNavigationHistory(){var history=await this._resourceTreeModel.navigationHistory();if(!history)
 return;this._historyIndex=history.currentIndex;this._historyEntries=history.entries;this._navigationBack.disabled=this._historyIndex===0;this._navigationForward.disabled=this._historyIndex===(this._historyEntries.length-1);var url=this._historyEntries[this._historyIndex].url;var match=url.match(Screencast.ScreencastView._HttpRegex);if(match)
 url=match[1];InspectorFrontendHost.inspectedURLChanged(url);this._navigationUrl.value=url;}
