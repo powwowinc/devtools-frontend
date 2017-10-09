@@ -645,7 +645,7 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
 
     var attributes = treeElement._node._attributes;
 
-    var attrsArr = [];
+    var attrsArr = [treeElement.node().localName()];
     attributes.forEach(attr => {
       attrsArr.push(attr.name, attr.value);
     });

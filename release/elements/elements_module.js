@@ -490,7 +490,7 @@ _ondragstart(event){if(event.target.hasSelection())
 return false;if(event.target.nodeName==='A')
 return false;var treeElement=this._treeElementFromEvent(event);if(!this._isValidDragSourceOrTarget(treeElement))
 return false;if(treeElement.node().nodeName()==='BODY'||treeElement.node().nodeName()==='HEAD')
-return false;var attributes=treeElement._node._attributes;var attrsArr=[];attributes.forEach(attr=>{attrsArr.push(attr.name,attr.value);});event.dataTransfer.setData('text/plain',treeElement.listItemElement.textContent.replace(/\u200b/g,''));event.dataTransfer.setData('type_devtools/attrs',JSON.stringify(attrsArr));event.dataTransfer.effectAllowed='copyMove';this._treeElementBeingDragged=treeElement;SDK.OverlayModel.hideDOMNodeHighlight();return true;}
+return false;var attributes=treeElement._node._attributes;var attrsArr=[treeElement.node().localName()];attributes.forEach(attr=>{attrsArr.push(attr.name,attr.value);});event.dataTransfer.setData('text/plain',treeElement.listItemElement.textContent.replace(/\u200b/g,''));event.dataTransfer.setData('type_devtools/attrs',JSON.stringify(attrsArr));event.dataTransfer.effectAllowed='copyMove';this._treeElementBeingDragged=treeElement;SDK.OverlayModel.hideDOMNodeHighlight();return true;}
 _ondragover(event){if(!this._treeElementBeingDragged)
 return false;var treeElement=this._treeElementFromEvent(event);if(!this._isValidDragSourceOrTarget(treeElement))
 return false;var node=treeElement.node();while(node){if(node===this._treeElementBeingDragged._node)
