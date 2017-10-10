@@ -67,8 +67,8 @@ Bindings.DebuggerWorkspaceBinding = class {
    * @return {!Bindings.DebuggerWorkspaceBinding.Location}
    */
   createLiveLocation(rawLocation, updateDelegate, locationPool) {
-    // var modelData = this._debuggerModelToData.get(rawLocation.script().debuggerModel);
-    // return modelData._createLiveLocation(rawLocation, updateDelegate, locationPool);
+    var modelData = this._debuggerModelToData.get(rawLocation.script().debuggerModel);
+    return modelData._createLiveLocation(rawLocation, updateDelegate, locationPool);
   }
 
   /**
