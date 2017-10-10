@@ -31,7 +31,7 @@ Protocol.inspectorBackend.registerEnum("Page.DialogType", {Alert: "alert", Confi
 Protocol.inspectorBackend.registerEnum("Page.NavigationResponse", {Proceed: "Proceed", Cancel: "Cancel", CancelAndIgnore: "CancelAndIgnore"});
 Protocol.inspectorBackend.registerEvent("Page.domContentEventFired", ["timestamp"]);
 Protocol.inspectorBackend.registerEvent("Page.loadEventFired", ["timestamp"]);
-Protocol.inspectorBackend.registerEvent("Page.lifecycleEvent", ["name", "timestamp"]);
+Protocol.inspectorBackend.registerEvent("Page.lifecycleEvent", ["frameId", "name", "timestamp"]);
 Protocol.inspectorBackend.registerEvent("Page.frameAttached", ["frameId", "parentFrameId", "stack"]);
 Protocol.inspectorBackend.registerEvent("Page.frameNavigated", ["frame"]);
 Protocol.inspectorBackend.registerEvent("Page.frameDetached", ["frameId"]);
@@ -111,6 +111,7 @@ Protocol.inspectorBackend.registerCommand("Overlay.getHighlightObjectForTest", [
 Protocol.inspectorBackend.registerEnum("Emulation.ScreenOrientationType", {PortraitPrimary: "portraitPrimary", PortraitSecondary: "portraitSecondary", LandscapePrimary: "landscapePrimary", LandscapeSecondary: "landscapeSecondary"});
 Protocol.inspectorBackend.registerEnum("Emulation.VirtualTimePolicy", {Advance: "advance", Pause: "pause", PauseIfNetworkFetchesPending: "pauseIfNetworkFetchesPending"});
 Protocol.inspectorBackend.registerEvent("Emulation.virtualTimeBudgetExpired", []);
+Protocol.inspectorBackend.registerEvent("Emulation.virtualTimeAdvanced", ["virtualTimeElapsed"]);
 Protocol.inspectorBackend.registerEvent("Emulation.virtualTimePaused", ["virtualTimeElapsed"]);
 Protocol.inspectorBackend.registerCommand("Emulation.setDeviceMetricsOverride", [{"name": "width", "type": "number", "optional": false}, {"name": "height", "type": "number", "optional": false}, {"name": "deviceScaleFactor", "type": "number", "optional": false}, {"name": "mobile", "type": "boolean", "optional": false}, {"name": "scale", "type": "number", "optional": true}, {"name": "screenWidth", "type": "number", "optional": true}, {"name": "screenHeight", "type": "number", "optional": true}, {"name": "positionX", "type": "number", "optional": true}, {"name": "positionY", "type": "number", "optional": true}, {"name": "dontSetVisibleSize", "type": "boolean", "optional": true}, {"name": "screenOrientation", "type": "object", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.clearDeviceMetricsOverride", [], [], false);
@@ -191,7 +192,7 @@ Protocol.inspectorBackend.registerCommand("Network.setCacheDisabled", [{"name": 
 Protocol.inspectorBackend.registerCommand("Network.setBypassServiceWorker", [{"name": "bypass", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Network.setDataSizeLimitsForTest", [{"name": "maxTotalSize", "type": "number", "optional": false}, {"name": "maxResourceSize", "type": "number", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Network.getCertificate", [{"name": "origin", "type": "string", "optional": false}], ["tableNames"], false);
-Protocol.inspectorBackend.registerCommand("Network.setRequestInterceptionEnabled", [{"name": "enabled", "type": "boolean", "optional": false}, {"name": "patterns", "type": "object", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("Network.setRequestInterceptionEnabled", [{"name": "enabled", "type": "boolean", "optional": false}, {"name": "patterns", "type": "object", "optional": true}, {"name": "resourceTypes", "type": "object", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Network.continueInterceptedRequest", [{"name": "interceptionId", "type": "string", "optional": false}, {"name": "errorReason", "type": "string", "optional": true}, {"name": "rawResponse", "type": "string", "optional": true}, {"name": "url", "type": "string", "optional": true}, {"name": "method", "type": "string", "optional": true}, {"name": "postData", "type": "string", "optional": true}, {"name": "headers", "type": "object", "optional": true}, {"name": "authChallengeResponse", "type": "object", "optional": true}], [], false);
 
 // Database.
@@ -459,13 +460,17 @@ Protocol.inspectorBackend.registerCommand("Accessibility.getPartialAXTree", [{"n
 Protocol.inspectorBackend.registerEnum("Storage.StorageType", {Appcache: "appcache", Cookies: "cookies", File_systems: "file_systems", Indexeddb: "indexeddb", Local_storage: "local_storage", Shader_cache: "shader_cache", Websql: "websql", Service_workers: "service_workers", Cache_storage: "cache_storage", All: "all", Other: "other"});
 Protocol.inspectorBackend.registerEvent("Storage.cacheStorageListUpdated", ["origin"]);
 Protocol.inspectorBackend.registerEvent("Storage.cacheStorageContentUpdated", ["origin", "cacheName"]);
+Protocol.inspectorBackend.registerEvent("Storage.indexedDBListUpdated", ["origin"]);
+Protocol.inspectorBackend.registerEvent("Storage.indexedDBContentUpdated", ["origin", "databaseName", "objectStoreName"]);
 Protocol.inspectorBackend.registerCommand("Storage.clearDataForOrigin", [{"name": "origin", "type": "string", "optional": false}, {"name": "storageTypes", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Storage.getUsageAndQuota", [{"name": "origin", "type": "string", "optional": false}], ["usage", "quota", "usageBreakdown"], false);
 Protocol.inspectorBackend.registerCommand("Storage.trackCacheStorageForOrigin", [{"name": "origin", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Storage.untrackCacheStorageForOrigin", [{"name": "origin", "type": "string", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Storage.trackIndexedDBForOrigin", [{"name": "origin", "type": "string", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Storage.untrackIndexedDBForOrigin", [{"name": "origin", "type": "string", "optional": false}], [], false);
 
 // Log.
-Protocol.inspectorBackend.registerEnum("Log.LogEntrySource", {XML: "xml", Javascript: "javascript", Network: "network", Storage: "storage", Appcache: "appcache", Rendering: "rendering", Security: "security", Deprecation: "deprecation", Worker: "worker", Violation: "violation", Intervention: "intervention", Other: "other"});
+Protocol.inspectorBackend.registerEnum("Log.LogEntrySource", {XML: "xml", Javascript: "javascript", Network: "network", Storage: "storage", Appcache: "appcache", Rendering: "rendering", Security: "security", Deprecation: "deprecation", Worker: "worker", Violation: "violation", Intervention: "intervention", Recommendation: "recommendation", Other: "other"});
 Protocol.inspectorBackend.registerEnum("Log.LogEntryLevel", {Verbose: "verbose", Info: "info", Warning: "warning", Error: "error"});
 Protocol.inspectorBackend.registerEnum("Log.ViolationSettingName", {LongTask: "longTask", LongLayout: "longLayout", BlockedEvent: "blockedEvent", BlockedParser: "blockedParser", DiscouragedAPIUse: "discouragedAPIUse", Handler: "handler", RecurringHandler: "recurringHandler"});
 Protocol.inspectorBackend.registerEvent("Log.entryAdded", ["entry"]);
@@ -535,7 +540,7 @@ Protocol.inspectorBackend.registerCommand("Debugger.enable", [], [], false);
 Protocol.inspectorBackend.registerCommand("Debugger.disable", [], [], false);
 Protocol.inspectorBackend.registerCommand("Debugger.setBreakpointsActive", [{"name": "active", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Debugger.setSkipAllPauses", [{"name": "skip", "type": "boolean", "optional": false}], [], false);
-Protocol.inspectorBackend.registerCommand("Debugger.setBreakpointByUrl", [{"name": "lineNumber", "type": "number", "optional": false}, {"name": "url", "type": "string", "optional": true}, {"name": "urlRegex", "type": "string", "optional": true}, {"name": "columnNumber", "type": "number", "optional": true}, {"name": "condition", "type": "string", "optional": true}], ["breakpointId", "locations"], false);
+Protocol.inspectorBackend.registerCommand("Debugger.setBreakpointByUrl", [{"name": "lineNumber", "type": "number", "optional": false}, {"name": "url", "type": "string", "optional": true}, {"name": "urlRegex", "type": "string", "optional": true}, {"name": "scriptHash", "type": "string", "optional": true}, {"name": "columnNumber", "type": "number", "optional": true}, {"name": "condition", "type": "string", "optional": true}], ["breakpointId", "locations"], false);
 Protocol.inspectorBackend.registerCommand("Debugger.setBreakpoint", [{"name": "location", "type": "object", "optional": false}, {"name": "condition", "type": "string", "optional": true}], ["breakpointId", "actualLocation"], false);
 Protocol.inspectorBackend.registerCommand("Debugger.removeBreakpoint", [{"name": "breakpointId", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Debugger.getPossibleBreakpoints", [{"name": "start", "type": "object", "optional": false}, {"name": "end", "type": "object", "optional": true}, {"name": "restrictToFunction", "type": "boolean", "optional": true}], ["locations"], false);
