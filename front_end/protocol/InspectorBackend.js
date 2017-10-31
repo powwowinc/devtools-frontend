@@ -230,8 +230,7 @@ Protocol.TargetBase = class {
       Protocol.InspectorBackend.deprecatedRunAfterPendingDispatches =
           this._deprecatedRunAfterPendingDispatches.bind(this);
     }
-    if (!Protocol.InspectorBackend.sendRawMessageForTesting)
-      Protocol.InspectorBackend.sendRawMessageForTesting = this._sendRawMessageForTesting.bind(this);
+    Protocol.InspectorBackend.sendRawMessageForTesting = this._sendRawMessageForTesting.bind(this);
   }
 
   /**

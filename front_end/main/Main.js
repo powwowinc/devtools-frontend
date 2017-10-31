@@ -307,6 +307,17 @@ Main.Main = class {
     }
   }
 
+  _reinitializeTarget() {
+    console.log('started to reinitialize');
+    Runtime._queryParamsObject['ws'] = `${window.location.hostname}:5000/devtools/page/?id=${window.explorerData.websocketDebuggerUrlId}&ver=${window.explorerData.version}&token=${localStorage.getItem('accessToken')}`;
+
+    SDK.targetManager.reconnectToMainTarget();
+
+    InspectorFrontendHost.readyForTest();
+    // Asynchronously run the extensions.
+    setTimeout(this._lateInitialization.bind(this), 100);
+  }
+  
   _lateInitialization() {
     console.timeStamp('Main._lateInitialization');
     this._registerShortcuts();
@@ -489,8 +500,8 @@ Main.Main.InspectorModel = class extends SDK.SDKModel {
    * @param {string} reason
    */
   detached(reason) {
-    Main._disconnectedScreenWithReasonWasShown = true;
-    Main.RemoteDebuggingTerminatedScreen.show(reason);
+    // Main._disconnectedScreenWithReasonWasShown = true;
+    // Main.RemoteDebuggingTerminatedScreen.show(reason);
   }
 
   /**

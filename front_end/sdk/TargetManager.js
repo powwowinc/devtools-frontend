@@ -325,6 +325,31 @@ SDK.TargetManager = class extends Common.Object {
     this._connectAndCreateMainTarget();
   }
 
+  reconnectToMainTarget() {
+    //clone and clear all observing models for previous Target
+    var cloneObservers = new Map();
+    this._modelObservers.forEach((observers, modelClass, map) => {
+      cloneObservers.set(modelClass, observers.slice());
+      cloneObservers.get(modelClass).forEach(observer => this.unobserveModels(modelClass, observer));
+    });
+
+    if (this._mainConnection._socket) this._mainConnection.disconnect();  //disconnect previous websocket
+    delete this._targets[0];  //delete previous target
+    this._targets.pop();
+
+    //create new target
+    var capabilities = SDK.Target.Capability.AllForTests;
+    var target = this.createTarget('main', Common.UIString('Main'), capabilities, this._createMainConnection.bind(this), null);
+
+    Screencast.ScreencastApp._instance(true);    //reinstantiate the screencast for new tab/target
+    Elements.ElementsPanel.instance()._treeOutlines = []; //clear out previous DOM tree
+
+    //add all observing model for new target
+    cloneObservers.forEach((observers, modelClass, map) => {
+      observers.forEach(observer => this.observeModels(modelClass, observer));
+    });
+  }
+
   _connectAndCreateMainTarget() {
     if (Runtime.queryParam('nodeFrontend')) {
       var target = new SDK.Target(
@@ -485,6 +510,8 @@ SDK.ChildTargetManager = class {
    * @param {!Protocol.Target.TargetInfo} targetInfo
    */
   targetCreated(targetInfo) {
+    if (targetInfo.type === 'page')
+      window.dispatchEvent(new CustomEvent('TargetPageCreated', { detail: targetInfo }));
     if (targetInfo.type !== 'node')
       return;
     if (Runtime.queryParam('nodeFrontend')) {
