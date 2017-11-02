@@ -334,20 +334,21 @@ SDK.TargetManager = class extends Common.Object {
     });
 
     if (this._mainConnection._socket) this._mainConnection.disconnect();  //disconnect previous websocket
-    delete this._targets[0];  //delete previous target
-    this._targets.pop();
+    delete this._targets.shift();  //delete previous target
 
     //create new target
     var capabilities = SDK.Target.Capability.AllForTests;
     var target = this.createTarget('main', Common.UIString('Main'), capabilities, this._createMainConnection.bind(this), null);
 
     Screencast.ScreencastApp._instance(true);    //reinstantiate the screencast for new tab/target
-    Elements.ElementsPanel.instance()._treeOutlines = []; //clear out previous DOM tree
-
+    delete Elements.ElementsPanel.instance()._treeOutlines.shift(); //clear out previous DOM tree
+    
     //add all observing model for new target
     cloneObservers.forEach((observers, modelClass, map) => {
       observers.forEach(observer => this.observeModels(modelClass, observer));
     });
+
+    window.document.dispatchEvent(new CustomEvent('ELEMENTS_PANEL_CONSTRUCTED')); //rebind the dom interface
   }
 
   _connectAndCreateMainTarget() {

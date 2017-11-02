@@ -643,24 +643,22 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
     if (treeElement.node().nodeName() === 'BODY' || treeElement.node().nodeName() === 'HEAD')
       return false;
 
-    //collect attributes and iframes to send
-    var attrsArr = {};
-    if (!treeElement._node._localName.match(/^iframe/)) {
-      attrsArr.attr = treeElement._node._attributes.reduce((res, attr) => {
-        return res.concat([attr.name, attr.value]);
-      }, [treeElement._node._localName]);
-    }
-    attrsArr.frames = [].slice.call(Elements.ElementsPanel.instance()._breadcrumbs.crumbsElement.children)
-      .map(el => el.textContent).filter(text => text.match(/^iframe/));
-
     event.dataTransfer.setData('text/plain', treeElement.listItemElement.textContent.replace(/\u200b/g, ''));
-    event.dataTransfer.setData('type_devtools/attrs', JSON.stringify(attrsArr));
+    event.dataTransfer.setData('type_devtools/attrs', '');
     event.dataTransfer.effectAllowed = 'copyMove';
     this._treeElementBeingDragged = treeElement;
 
     SDK.OverlayModel.hideDOMNodeHighlight();
 
     return true;
+  }
+
+  _collectAttributes() { //collect attributes and iframes to send
+    var node = this._selectedDOMNode, attrsObj = { frames: [] };
+    var pack = node => node._attributes.reduce((res, attr) => [...res, attr.name, attr.value], [node._localName]);
+    if (!node._localName.match(/^iframe/)) attrsObj.selector = pack(node);
+    do { if (node._localName.match(/^iframe/)) attrsObj.frames.push(pack(node)); } while (node = node.parentNode);
+    return attrsObj;
   }
 
   _ondragover(event) {
