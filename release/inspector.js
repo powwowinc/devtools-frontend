@@ -134,10 +134,7 @@ cleanedUpExperimentSetting[experimentName]=true;}
 this._setExperimentsSetting(cleanedUpExperimentSetting);}
 _checkExperiment(experimentName){Runtime._assert(this._experimentNames[experimentName],'Unknown experiment '+experimentName);}};Runtime.Experiment=class{constructor(experiments,name,title,hidden){this.name=name;this.title=title;this.hidden=hidden;this._experiments=experiments;}
 isEnabled(){return this._experiments.isEnabled(this.name);}
-setEnabled(enabled){this._experiments.setEnabled(this.name,enabled);}};window.runtimeInit=function(){{(function parseQueryParameters(){var queryParams=Runtime.queryParamsString();var domainName=window.location.hostname;var port=window.location.port;Runtime._queryParamsObject['can_dock']=true;Runtime._queryParamsObject['dock-side']='right';Runtime._queryParamsObject['remoteFrontend']=true;Runtime._queryParamsObject['experiments']=true;if(!queryParams){Runtime._queryParamsObject['ws']=domainName+':5000/devtools/page/?id='+window.explorerData.websocketDebuggerUrlId+'&ver='+window.explorerData.version+'&token='+localStorage.getItem('accessToken');return;}
-var params=queryParams.substring(1).split('&');for(var i=0;i<params.length;++i){var pair=params[i].split('=');var name=pair.shift();if(name==='serverPort')
-Runtime._queryParamsObject['ws']=domainName+':5000/devtools/page/?id='+window.explorerData.websocketDebuggerUrlId+'&ver='+window.explorerData.version+'&token='+localStorage.getItem('accessToken');else
-Runtime._queryParamsObject[name]=pair.join('=');}})();}
+setEnabled(enabled){this._experiments.setEnabled(this.name,enabled);}};window.runtimeInit=function(){{(function parseQueryParameters(){Runtime._queryParamsObject['ws'] = window.getWSUrl();Runtime._queryParamsObject['can_dock'] = true;Runtime._queryParamsObject['dock-side'] = 'right';Runtime._queryParamsObject['remoteFrontend'] = true;Runtime._queryParamsObject['experiments'] = true;})();}
 Runtime.experiments=new Runtime.ExperimentsSupport();Runtime._remoteBase=Runtime.queryParam('remoteBase');{(function validateRemoteBase(){var remoteBaseRegexp=/^https:\/\/chrome-devtools-frontend\.appspot\.com\/serve_file\/@[0-9a-zA-Z]+\/?$/;if(Runtime._remoteBase&&!remoteBaseRegexp.test(Runtime._remoteBase))
 Runtime._remoteBase=null;})();}
 function ServicePort(){}
@@ -8234,7 +8231,7 @@ extension.instance().then(handleQueryParam.bind(null,value));}
 function handleQueryParam(value,handler){handler.handleQueryParam(value);}
 setTimeout(this._initializeTarget.bind(this),0);Main.Main.timeEnd('Main._showAppUI');}
 _initializeTarget(){Main.Main.time('Main._initializeTarget');SDK.targetManager.connectToMainTarget(webSocketConnectionLost);InspectorFrontendHost.readyForTest();setTimeout(this._lateInitialization.bind(this),100);Main.Main.timeEnd('Main._initializeTarget');function webSocketConnectionLost(){}}
-_reinitializeTarget(){console.log('started to reinitialize');Runtime._queryParamsObject['ws'] = `${window.location.hostname}:5000/devtools/page/?id=${window.explorerData.websocketDebuggerUrlId}&ver=${window.explorerData.version}&token=${localStorage.getItem('accessToken')}`;SDK.targetManager.reconnectToMainTarget();InspectorFrontendHost.readyForTest();setTimeout(this._lateInitialization.bind(this), 100);}
+_reinitializeTarget(){console.log('started to reinitialize');Runtime._queryParamsObject['ws']=window.getWSUrl();SDK.targetManager.reconnectToMainTarget();InspectorFrontendHost.readyForTest();setTimeout(this._lateInitialization.bind(this), 100);}
 _lateInitialization(){console.timeStamp('Main._lateInitialization');this._registerShortcuts();Extensions.extensionServer.initializeExtensions();if(!Host.isUnderTest())
 Help.showReleaseNoteIfNeeded();}
 _registerForwardedShortcuts(){var forwardedActions=['main.toggle-dock','debugger.toggle-breakpoints-active','debugger.toggle-pause','commandMenu.show','console.show'];var actionKeys=UI.shortcutRegistry.keysForActions(forwardedActions).map(UI.KeyboardShortcut.keyCodeAndModifiersFromKey);InspectorFrontendHost.setWhitelistedShortcuts(JSON.stringify(actionKeys));}

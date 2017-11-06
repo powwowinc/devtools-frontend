@@ -1083,28 +1083,11 @@ Runtime.Experiment = class {
 window.runtimeInit = function() {
   {
     (function parseQueryParameters() {
-      var queryParams = Runtime.queryParamsString();
-      var domainName = window.location.hostname;
-      var port = window.location.port;
-  
+      Runtime._queryParamsObject['ws'] = window.getWSUrl();
       Runtime._queryParamsObject['can_dock'] = true;
       Runtime._queryParamsObject['dock-side'] = 'right';
       Runtime._queryParamsObject['remoteFrontend'] = true;
       Runtime._queryParamsObject['experiments'] = true;
-  
-      if (!queryParams) {
-        Runtime._queryParamsObject['ws'] = domainName + ':5000/devtools/page/?id=' + window.explorerData.websocketDebuggerUrlId + '&ver=' + window.explorerData.version + '&token=' + localStorage.getItem('accessToken');
-        return;
-      }
-      var params = queryParams.substring(1).split('&');
-      for (var i = 0; i < params.length; ++i) {
-        var pair = params[i].split('=');
-        var name = pair.shift();
-        if (name === 'serverPort')
-          Runtime._queryParamsObject['ws'] = domainName + ':5000/devtools/page/?id=' + window.explorerData.websocketDebuggerUrlId + '&ver=' + window.explorerData.version + '&token=' + localStorage.getItem('accessToken');
-        else
-          Runtime._queryParamsObject[name] = pair.join('=');
-      }
     })();
   }
   

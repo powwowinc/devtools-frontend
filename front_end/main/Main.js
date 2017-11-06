@@ -309,7 +309,7 @@ Main.Main = class {
 
   _reinitializeTarget() {
     console.log('started to reinitialize');
-    Runtime._queryParamsObject['ws'] = `${window.location.hostname}:5000/devtools/page/?id=${window.explorerData.websocketDebuggerUrlId}&ver=${window.explorerData.version}&token=${localStorage.getItem('accessToken')}`;
+    Runtime._queryParamsObject['ws'] = window.getWSUrl();
 
     SDK.targetManager.reconnectToMainTarget();
 
