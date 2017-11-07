@@ -437,7 +437,7 @@ get isXMLMimeType(){return this._isXMLMimeType;}
 selectedDOMNode(){return this._selectedDOMNode;}
 selectDOMNode(node,focus){if(this._selectedDOMNode===node){this._revealAndSelectNode(node,!focus);return;}
 this._selectedDOMNode=node;this._revealAndSelectNode(node,!focus);if(this._selectedDOMNode===node)
-this._selectedNodeChanged(!!focus);}
+this._selectedNodeChanged(!!focus);if(focus) window.document.dispatchEvent(new CustomEvent('DOM_NODE_SELECTED', { detail: node }));}
 editing(){var node=this.selectedDOMNode();if(!node)
 return false;var treeElement=this.findTreeElement(node);if(!treeElement)
 return false;return treeElement.isEditing()||false;}
@@ -491,7 +491,7 @@ return false;if(event.target.nodeName==='A')
 return false;var treeElement=this._treeElementFromEvent(event);if(!this._isValidDragSourceOrTarget(treeElement))
 return false;if(treeElement.node().nodeName()==='BODY'||treeElement.node().nodeName()==='HEAD')
 return false;event.dataTransfer.setData('text/plain',treeElement.listItemElement.textContent.replace(/\u200b/g,''));event.dataTransfer.setData('type_devtools/attrs','');event.dataTransfer.effectAllowed='copyMove';this._treeElementBeingDragged=treeElement;SDK.OverlayModel.hideDOMNodeHighlight();return true;}
-_collectAttributes(){var node=this._selectedDOMNode,attrsObj={frames:[]};var pack = node => node._attributes.reduce((res, attr) => [...res, attr.name, attr.value], [node._localName]);if (!node._localName.match(/^iframe/)) attrsObj.selector = pack(node);do { if (node._localName.match(/^iframe/)) attrsObj.frames.push(pack(node)); } while (node = node.parentNode);return attrsObj;}
+_collectAttributes(){var node=this._selectedDOMNode,attrsObj={frames:[]};var pack = node => node._attributes.reduce((res, attr) => [...res, attr.name, attr.value], [node._localName]);if (node._localName!=='iframe') attrsObj.selector = pack(node);do { if (node._localName==='iframe') attrsObj.frames.push(pack(node)); } while (node = node.parentNode);return attrsObj;}
 _ondragover(event){if(!this._treeElementBeingDragged)
 return false;var treeElement=this._treeElementFromEvent(event);if(!this._isValidDragSourceOrTarget(treeElement))
 return false;var node=treeElement.node();while(node){if(node===this._treeElementBeingDragged._node)

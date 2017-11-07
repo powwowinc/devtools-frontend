@@ -353,6 +353,8 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
     // node as the one passed in.
     if (this._selectedDOMNode === node)
       this._selectedNodeChanged(!!focus);
+
+    if (focus) window.document.dispatchEvent(new CustomEvent('DOM_NODE_SELECTED', { detail: node }));      
   }
 
   /**
@@ -656,8 +658,8 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
   _collectAttributes() { //collect attributes and iframes to send
     var node = this._selectedDOMNode, attrsObj = { frames: [] };
     var pack = node => node._attributes.reduce((res, attr) => [...res, attr.name, attr.value], [node._localName]);
-    if (!node._localName.match(/^iframe/)) attrsObj.selector = pack(node);
-    do { if (node._localName.match(/^iframe/)) attrsObj.frames.push(pack(node)); } while (node = node.parentNode);
+    if (node._localName !== 'iframe') attrsObj.selector = pack(node);
+    do { if (node._localName === 'iframe') attrsObj.frames.push(pack(node)); } while (node = node.parentNode);
     return attrsObj;
   }
 
