@@ -632,11 +632,14 @@ Screencast.ScreencastView = class extends UI.VBox {
     if (newIndex < 0 || newIndex >= this._historyEntries.length)
       return;
     this._resourceTreeModel.navigateToHistoryEntry(this._historyEntries[newIndex]);
-    this._requestNavigationHistory();
+    this._requestNavigationHistory().then(() => {
+      window.document.dispatchEvent(new CustomEvent('NAVIGATED_WITH_URL_BAR'));
+    });
   }
 
   _navigateReload() {
     this._resourceTreeModel.reloadPage();
+    window.document.dispatchEvent(new CustomEvent('NAVIGATED_WITH_URL_BAR'));
   }
 
   /**
