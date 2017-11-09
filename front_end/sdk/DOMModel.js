@@ -1263,6 +1263,7 @@ SDK.DOMModel = class extends SDK.SDKModel {
 
   _documentUpdated() {
     this._setDocument(null);
+    window.document.dispatchEvent(new CustomEvent("UPDATED_DOCUMENT"));
   }
 
   /**
@@ -1325,6 +1326,7 @@ SDK.DOMModel = class extends SDK.SDKModel {
     this._idToDOMNode[node.id] = node;
     this.dispatchEventToListeners(SDK.DOMModel.Events.NodeInserted, node);
     this._scheduleMutationEvent(node);
+    if (payload.localName === 'iframe') window.document.dispatchEvent(new CustomEvent("UPDATED_DOCUMENT"));
   }
 
   /**
