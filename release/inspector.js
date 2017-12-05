@@ -3328,7 +3328,8 @@ return SDK.Target.Capability.JS|SDK.Target.Capability.Log|SDK.Target.Capability.
 return SDK.Target.Capability.Log|SDK.Target.Capability.Network|SDK.Target.Capability.Target;if(type==='iframe'){return SDK.Target.Capability.Browser|SDK.Target.Capability.DOM|SDK.Target.Capability.JS|SDK.Target.Capability.Log|SDK.Target.Capability.Network|SDK.Target.Capability.Target|SDK.Target.Capability.Tracing|SDK.Target.Capability.Emulation|SDK.Target.Capability.Input;}
 if(type==='node')
 return SDK.Target.Capability.JS;return 0;}
-targetCreated(targetInfo){if(targetInfo.type!=='node')
+targetCreated(targetInfo){if(targetInfo.type==='page')window.document.dispatchEvent(new CustomEvent('TargetPageCreated', { detail: targetInfo }));
+if(targetInfo.type!=='node')
 return;if(Runtime.queryParam('nodeFrontend')){if(!targetInfo.attached)
 this._targetAgent.attachToTarget(targetInfo.targetId);return;}
 if(targetInfo.attached)

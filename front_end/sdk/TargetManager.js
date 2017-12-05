@@ -512,7 +512,7 @@ SDK.ChildTargetManager = class {
    */
   targetCreated(targetInfo) {
     if (targetInfo.type === 'page')
-      window.dispatchEvent(new CustomEvent('TargetPageCreated', { detail: targetInfo }));
+      window.document.dispatchEvent(new CustomEvent('TargetPageCreated', { detail: targetInfo }));
     if (targetInfo.type !== 'node')
       return;
     if (Runtime.queryParam('nodeFrontend')) {
