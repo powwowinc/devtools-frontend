@@ -495,21 +495,21 @@ Elements.ElementsTreeElement = class extends UI.TreeElement {
     var isShadowRoot = this._node.isShadowRoot();
 
     // Place it here so that all "Copy"-ing items stick together.
-    var copyMenu = contextMenu.appendSubMenuItem(Common.UIString('Copy'));
+    // var copyMenu = contextMenu.appendSubMenuItem(Common.UIString('Copy'));
     var createShortcut = UI.KeyboardShortcut.shortcutToString;
     var modifier = UI.KeyboardShortcut.Modifiers.CtrlOrMeta;
     var treeOutline = this.treeOutline;
     var menuItem;
-    if (!isShadowRoot) {
+    if (false && !isShadowRoot) {
       menuItem = copyMenu.appendItem(
           Common.UIString('Copy outerHTML'), treeOutline.performCopyOrCut.bind(treeOutline, false, this._node));
       menuItem.setShortcut(createShortcut('V', modifier));
     }
-    if (this._node.nodeType() === Node.ELEMENT_NODE)
+    if (false && this._node.nodeType() === Node.ELEMENT_NODE)
       copyMenu.appendItem(Common.UIString('Copy selector'), this._copyCSSPath.bind(this));
-    if (!isShadowRoot)
+    if (false && !isShadowRoot)
       copyMenu.appendItem(Common.UIString('Copy XPath'), this._copyXPath.bind(this));
-    if (!isShadowRoot) {
+    if (false && !isShadowRoot) {
       menuItem = copyMenu.appendItem(
           Common.UIString('Cut element'), treeOutline.performCopyOrCut.bind(treeOutline, true, this._node),
           !this.hasEditableNode());
