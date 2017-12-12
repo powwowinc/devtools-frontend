@@ -5241,7 +5241,7 @@ frameStoppedLoading(frameId){window.document.dispatchEvent(new CustomEvent('UPDA
 frameScheduledNavigation(frameId,delay){}
 frameClearedScheduledNavigation(frameId){}
 frameResized(){this._resourceTreeModel.dispatchEventToListeners(SDK.ResourceTreeModel.Events.FrameResized,null);}
-javascriptDialogOpening(url,message,dialogType,prompt){}
+javascriptDialogOpening(url,message,dialogType,prompt){let obj={ url: url, message: message, dialogType: dialogType, prompt: prompt };window.document.dispatchEvent(new CustomEvent("DIALOG_OPENED", { detail: obj }));}
 javascriptDialogClosed(result,userInput){}
 screencastFrame(data,metadata,sessionId){}
 screencastVisibilityChanged(visible){}
