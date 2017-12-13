@@ -1468,7 +1468,7 @@ Elements.ElementsTreeElement = class extends UI.TreeElement {
           break;
         }
 
-        if (this.treeOutline.isXMLMimeType || !Elements.ElementsTreeElement.ForbiddenClosingTagElements.has(tagName))
+        if ((this.treeOutline && this.treeOutline.isXMLMimeType) || !Elements.ElementsTreeElement.ForbiddenClosingTagElements.has(tagName))
           this._buildTagDOM(titleDOM, tagName, true, false, updateRecord);
         break;
 
