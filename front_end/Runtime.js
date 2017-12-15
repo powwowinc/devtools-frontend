@@ -546,8 +546,8 @@ var Runtime = class {
    * @param {?Object=} context
    * @return {?Runtime.Extension}
    */
-  extension(type, context) {
-    return this.extensions(type, context)[0] || null;
+  extension(type, context) { //powwow - Select the screencastAppProvider
+    return this.extensions(type, context)[1] || null;
   }
 
   /**

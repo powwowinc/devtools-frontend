@@ -73,7 +73,7 @@ return false;if(!extension.enabled())
 return false;return!context||extension.isApplicable(context);}
 function orderComparator(extension1,extension2){var order1=extension1.descriptor()['order']||0;var order2=extension2.descriptor()['order']||0;return order1-order2;}
 function titleComparator(extension1,extension2){var title1=extension1.title()||'';var title2=extension2.title()||'';return title1.localeCompare(title2);}}
-extension(type,context){return this.extensions(type,context)[0]||null;}
+extension(type,context){return this.extensions(type,context)[1]||null;}
 allInstances(type,context){return Promise.all(this.extensions(type,context).map(extension=>extension.instance()));}
 _resolve(typeName){if(!this._cachedTypeClasses[typeName]){var path=typeName.split('.');var object=self;for(var i=0;object&&(i<path.length);++i)
 object=object[path[i]];if(object)

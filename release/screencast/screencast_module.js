@@ -14,7 +14,7 @@ static _instance(renewal){if(!Screencast.ScreencastApp._appInstance||renewal){Sc
 return Screencast.ScreencastApp._appInstance;}
 presentUI(document){var rootView=new UI.RootView();this._rootSplitWidget=new UI.SplitWidget(false,true,'InspectorView.screencastSplitViewState',300,300);this._rootSplitWidget.setVertical(true);this._rootSplitWidget.setSecondIsSidebar(true);this._rootSplitWidget.show(rootView.element);this._rootSplitWidget.hideMain();this._rootSplitWidget.setSidebarWidget(UI.inspectorView);rootView.attachToDocument(document);rootView.focus();}
 modelAdded(screenCaptureModel){if(this._screenCaptureModel)
-return;this._screenCaptureModel=screenCaptureModel;this._toggleButton.setEnabled(true);this._screencastView=new Screencast.ScreencastView(screenCaptureModel);var shadowRoot=document.body.querySelector('#domInspector').shadowRoot;var rootDiv=shadowRoot.querySelector('div');this.presentUI(rootDiv);this._rootSplitWidget.setMainWidget(this._screencastView);this._screencastView.initialize();this._onScreencastEnabledChanged();}
+return;this._screenCaptureModel=screenCaptureModel;this._toggleButton.setEnabled(true);this._screencastView=new Screencast.ScreencastView(screenCaptureModel);this._rootSplitWidget.setMainWidget(this._screencastView);this._screencastView.initialize();this._onScreencastEnabledChanged();}
 modelRemoved(screenCaptureModel){if(this._screenCaptureModel!==screenCaptureModel)
 return;delete this._screenCaptureModel;this._toggleButton.setEnabled(false);this._screencastView.detach();delete this._screencastView;this._onScreencastEnabledChanged();}
 _toggleButtonClicked(){var enabled=!this._toggleButton.toggled();this._enabledSetting.set(enabled);this._onScreencastEnabledChanged();}
