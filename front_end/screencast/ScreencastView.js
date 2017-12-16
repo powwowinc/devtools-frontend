@@ -96,6 +96,22 @@ Screencast.ScreencastView = class extends UI.VBox {
     this._updateGlasspane();
   }
 
+  reinit(screenCaptureModel) { //powwow - bind new ScreenCaptureModel to old ScreencastView
+    this._screenCaptureModel = screenCaptureModel;
+    this._domModel = screenCaptureModel.target().model(SDK.DOMModel);
+    this._overlayModel = screenCaptureModel.target().model(SDK.OverlayModel);
+    this._resourceTreeModel = screenCaptureModel.target().model(SDK.ResourceTreeModel);
+    this._networkManager = screenCaptureModel.target().model(SDK.NetworkManager);
+    this._inputModel = screenCaptureModel.target().model(Screencast.InputModel);
+
+    // update the alternate ScreenCaptureModel inside the Target's Page dispatcher
+    let altScreenCaptureModel = screenCaptureModel._agent._target._dispatchers['Page']._dispatchers[1];
+    altScreenCaptureModel._onScreencastFrame = this._screencastFrame.bind(this);
+    altScreenCaptureModel._onScreencastVisibilityChanged = this._screencastVisibilityChanged.bind(this);
+
+    this._startCasting();
+  }
+
   /**
    * @override
    */
@@ -131,7 +147,7 @@ Screencast.ScreencastView = class extends UI.VBox {
         Math.floor(Math.min(maxImageDimension, dimensions.height)), undefined, this._screencastFrame.bind(this),
         this._screencastVisibilityChanged.bind(this));
     for (var emulationModel of SDK.targetManager.models(SDK.EmulationModel))
-      emulationModel.overrideEmulateTouch(true);
+      emulationModel.overrideEmulateTouch(false); //powwow - prevent mouse->touch translation
     if (this._overlayModel)
       this._overlayModel.setHighlighter(this);
   }

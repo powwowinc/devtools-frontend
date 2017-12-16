@@ -325,7 +325,7 @@ SDK.TargetManager = class extends Common.Object {
     this._connectAndCreateMainTarget();
   }
 
-  reconnectToMainTarget() {
+  reconnectToMainTarget() { //powwow
     //clone and clear all observing models for previous Target
     var cloneObservers = new Map();
     this._modelObservers.forEach((observers, modelClass, map) => {
@@ -333,22 +333,34 @@ SDK.TargetManager = class extends Common.Object {
       cloneObservers.get(modelClass).forEach(observer => this.unobserveModels(modelClass, observer));
     });
 
-    if (this._mainConnection._socket) this._mainConnection.disconnect();  //disconnect previous websocket
-    delete this._targets.shift();  //delete previous target
+    //stop current target screencast
+    var screencastApp = Screencast.ScreencastApp._instance();
+    screencastApp._screencastView._stopCasting();
+
+    //disconnect previous websocket
+    if (this._mainConnection._socket) this._mainConnection.disconnect();  
+    
+    //delete previous target
+    this.removeTarget(this._targets[0]);  
 
     //create new target
     var capabilities = SDK.Target.Capability.AllForTests;
     var target = this.createTarget('main', Common.UIString('Main'), capabilities, this._createMainConnection.bind(this), null);
-
-    Screencast.ScreencastApp._instance(true);    //reinstantiate the screencast for new tab/target
-    delete Elements.ElementsPanel.instance()._treeOutlines.shift(); //clear out previous DOM tree
+    
+    //clear out previous DOM tree
+    delete Elements.ElementsPanel.instance()._treeOutlines.shift(); 
     
     //add all observing model for new target
     cloneObservers.forEach((observers, modelClass, map) => {
       observers.forEach(observer => this.observeModels(modelClass, observer));
     });
+    
+    //restart screencast for new target
+    screencastApp._screenCaptureModel._agent = target.pageAgent();
+    screencastApp._screencastView.reinit(screencastApp._screenCaptureModel);
 
-    window.document.dispatchEvent(new CustomEvent('ELEMENTS_PANEL_CONSTRUCTED')); //rebind the dom interface
+    //rebind the dom interface
+    window.document.dispatchEvent(new CustomEvent('ELEMENTS_PANEL_CONSTRUCTED')); 
   }
 
   _connectAndCreateMainTarget() {
@@ -512,7 +524,7 @@ SDK.ChildTargetManager = class {
    */
   targetCreated(targetInfo) {
     if (targetInfo.type === 'page')
-      window.document.dispatchEvent(new CustomEvent('TargetPageCreated', { detail: targetInfo }));
+      window.document.dispatchEvent(new CustomEvent('TARGET_PAGE_CREATED', { detail: targetInfo }));
     if (targetInfo.type !== 'node')
       return;
     if (Runtime.queryParam('nodeFrontend')) {
