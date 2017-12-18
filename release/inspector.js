@@ -2650,7 +2650,8 @@ headerElement(){return this._headerElement;}
 isTabCloseable(id){var tab=this._tabsById.get(id);return tab?tab.isCloseable():false;}
 setTabDelegate(delegate){var tabs=this._tabs.slice();for(var i=0;i<tabs.length;++i)
 tabs[i].setDelegate(delegate);this._delegate=delegate;}
-appendTab(id,tabTitle,view,tabTooltip,userGesture,isCloseable,index){isCloseable=typeof isCloseable==='boolean'?isCloseable:this._closeableTabs;var tab=new UI.TabbedPaneTab(this,id,tabTitle,isCloseable,view,tabTooltip);tab.setDelegate(this._delegate);console.assert(!this._tabsById.has(id),`Tabbed pane already contains a tab with id '${id}'`);this._tabsById.set(id,tab);if(index!==undefined)
+appendTab(id,tabTitle,view,tabTooltip,userGesture,isCloseable,index){if (~['Performance', 'Memory', 'Security', 'Audits'].indexOf(tabTitle)) return;
+isCloseable=typeof isCloseable==='boolean'?isCloseable:this._closeableTabs;var tab=new UI.TabbedPaneTab(this,id,tabTitle,isCloseable,view,tabTooltip);tab.setDelegate(this._delegate);console.assert(!this._tabsById.has(id),`Tabbed pane already contains a tab with id '${id}'`);this._tabsById.set(id,tab);if(index!==undefined)
 this._tabs.splice(index,0,tab);else
 this._tabs.push(tab);this._tabsHistory.push(tab);if(this._tabsHistory[0]===tab&&this.isShowing())
 this.selectTab(tab.id,userGesture);this._updateTabElements();}
