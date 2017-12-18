@@ -20,10 +20,8 @@ Screencast.ScreencastApp = class {
    * @return {!Screencast.ScreencastApp}
    */
   static _instance(renewal) {
-    if (!Screencast.ScreencastApp._appInstance || renewal) {
+    if (!Screencast.ScreencastApp._appInstance)
       Screencast.ScreencastApp._appInstance = new Screencast.ScreencastApp();
-      window.document.dispatchEvent(new CustomEvent('SCREENCAST_APP_CONSTRUCTED'));
-    }
     return Screencast.ScreencastApp._appInstance;
   }
 
@@ -58,6 +56,7 @@ Screencast.ScreencastApp = class {
     this._rootSplitWidget.setMainWidget(this._screencastView);
     this._screencastView.initialize();
     this._onScreencastEnabledChanged();
+    window.document.dispatchEvent(new CustomEvent('SCREENCAST_APP_CONSTRUCTED'));
   }
 
   /**
