@@ -326,11 +326,11 @@ SDK.TargetManager = class extends Common.Object {
   }
 
   reconnectToMainTarget() { //powwow
-    //stop current target screencast
+    //stop current target screencast before disconnecting ws
     var screencastApp = Screencast.ScreencastApp._instance();
     if (screencastApp._screencastView) screencastApp._screencastView._stopCasting();
 
-    //disconnect previous websocket
+    //disconnect previous websocket to prevent multiple ws
     if (this._mainConnection._socket) this._mainConnection.disconnect();  
     
     //delete previous target
@@ -501,8 +501,6 @@ SDK.ChildTargetManager = class {
    * @param {!Protocol.Target.TargetInfo} targetInfo
    */
   targetCreated(targetInfo) {
-    if (targetInfo.type === 'page')
-      window.document.dispatchEvent(new CustomEvent('TARGET_PAGE_CREATED', { detail: targetInfo }));
     if (targetInfo.type !== 'node')
       return;
     if (Runtime.queryParam('nodeFrontend')) {
