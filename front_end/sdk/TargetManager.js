@@ -326,16 +326,9 @@ SDK.TargetManager = class extends Common.Object {
   }
 
   reconnectToMainTarget() { //powwow
-    //clone and clear all observing models for previous Target
-    var cloneObservers = new Map();
-    this._modelObservers.forEach((observers, modelClass, map) => {
-      cloneObservers.set(modelClass, observers.slice());
-      cloneObservers.get(modelClass).forEach(observer => this.unobserveModels(modelClass, observer));
-    });
-
     //stop current target screencast
     var screencastApp = Screencast.ScreencastApp._instance();
-    screencastApp._screencastView._stopCasting();
+    if (screencastApp._screencastView) screencastApp._screencastView._stopCasting();
 
     //disconnect previous websocket
     if (this._mainConnection._socket) this._mainConnection.disconnect();  
@@ -346,21 +339,6 @@ SDK.TargetManager = class extends Common.Object {
     //create new target
     var capabilities = SDK.Target.Capability.AllForTests;
     var target = this.createTarget('main', Common.UIString('Main'), capabilities, this._createMainConnection.bind(this), null);
-    
-    //clear out previous DOM tree
-    delete Elements.ElementsPanel.instance()._treeOutlines.shift(); 
-    
-    //add all observing model for new target
-    cloneObservers.forEach((observers, modelClass, map) => {
-      observers.forEach(observer => this.observeModels(modelClass, observer));
-    });
-    
-    //restart screencast for new target
-    screencastApp._screenCaptureModel._agent = target.pageAgent();
-    screencastApp._screencastView.reinit(screencastApp._screenCaptureModel);
-
-    //rebind the dom interface
-    window.document.dispatchEvent(new CustomEvent('ELEMENTS_PANEL_CONSTRUCTED')); 
   }
 
   _connectAndCreateMainTarget() {
