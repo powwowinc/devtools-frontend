@@ -632,14 +632,11 @@ Screencast.ScreencastView = class extends UI.VBox {
     if (newIndex < 0 || newIndex >= this._historyEntries.length)
       return;
     this._resourceTreeModel.navigateToHistoryEntry(this._historyEntries[newIndex]);
-    this._requestNavigationHistory().then(() => {
-      window.document.dispatchEvent(new CustomEvent('NAVIGATED_WITH_URL_BAR'));
-    });
+    this._requestNavigationHistory();
   }
 
   _navigateReload() {
     this._resourceTreeModel.reloadPage();
-    window.document.dispatchEvent(new CustomEvent('NAVIGATED_WITH_URL_BAR'));
   }
 
   /**
@@ -653,9 +650,7 @@ Screencast.ScreencastView = class extends UI.VBox {
       return;
     if (!url.match(Screencast.ScreencastView._SchemeRegex))
       url = 'http://' + url;
-    this._resourceTreeModel.navigate(url).then(() => {
-      window.document.dispatchEvent(new CustomEvent('NAVIGATED_WITH_URL_BAR'));
-    });
+    this._resourceTreeModel.navigate(url);
     this._canvasElement.focus();
   }
 
