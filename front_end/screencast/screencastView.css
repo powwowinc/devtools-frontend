@@ -33,6 +33,7 @@
 }
 
 .screencast-navigation {
+    z-index: 5;
     flex-direction: row;
     display: flex;
     flex: 40px 0 0;
