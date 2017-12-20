@@ -807,7 +807,6 @@ SDK.PageDispatcher = class {
    * @param {!Protocol.Page.FrameId} frameId
    */
   frameStoppedLoading(frameId) {
-    window.document.dispatchEvent(new CustomEvent('UPDATED_DOCUMENT'));
   }
 
   /**
@@ -840,8 +839,6 @@ SDK.PageDispatcher = class {
    * @param {string=} prompt
    */
   javascriptDialogOpening(url, message, dialogType, prompt) {
-    let obj = { url: url, message: message, dialogType: dialogType, prompt: prompt };
-    window.document.dispatchEvent(new CustomEvent("DIALOG_OPENED", { detail: obj }));
   }
 
   /**

@@ -4180,7 +4180,7 @@ return;if(node._setAttributesPayload(attributes)){this.dispatchEventToListeners(
 this._attributeLoadNodeIds.clear();}
 _characterDataModified(nodeId,newValue){var node=this._idToDOMNode[nodeId];node._nodeValue=newValue;this.dispatchEventToListeners(SDK.DOMModel.Events.CharacterDataModified,node);this._scheduleMutationEvent(node);}
 nodeForId(nodeId){return this._idToDOMNode[nodeId]||null;}
-_documentUpdated(){this._setDocument(null);window.document.dispatchEvent(new CustomEvent("UPDATED_DOCUMENT"));}
+_documentUpdated(){this._setDocument(null);}
 _setDocument(payload){this._idToDOMNode={};if(payload&&'nodeId'in payload)
 this._document=new SDK.DOMDocument(this,payload);else
 this._document=null;this.dispatchEventToListeners(SDK.DOMModel.Events.DocumentUpdated,this);}
@@ -4191,7 +4191,7 @@ _setChildNodes(parentId,payloads){if(!parentId&&payloads.length){this._setDetach
 var parent=this._idToDOMNode[parentId];if(parent)
 parent._setChildrenPayload(payloads);}
 _childNodeCountUpdated(nodeId,newValue){var node=this._idToDOMNode[nodeId];node._childNodeCount=newValue;this.dispatchEventToListeners(SDK.DOMModel.Events.ChildNodeCountUpdated,node);this._scheduleMutationEvent(node);}
-_childNodeInserted(parentId,prevId,payload){var parent=this._idToDOMNode[parentId];var prev=this._idToDOMNode[prevId];var node=parent._insertChild(prev,payload);this._idToDOMNode[node.id]=node;this.dispatchEventToListeners(SDK.DOMModel.Events.NodeInserted,node);this._scheduleMutationEvent(node);if (payload.localName === 'iframe') window.document.dispatchEvent(new CustomEvent("UPDATED_DOCUMENT"));}
+_childNodeInserted(parentId,prevId,payload){var parent=this._idToDOMNode[parentId];var prev=this._idToDOMNode[prevId];var node=parent._insertChild(prev,payload);this._idToDOMNode[node.id]=node;this.dispatchEventToListeners(SDK.DOMModel.Events.NodeInserted,node);this._scheduleMutationEvent(node);}
 _childNodeRemoved(parentId,nodeId){var parent=this._idToDOMNode[parentId];var node=this._idToDOMNode[nodeId];parent._removeChild(node);this._unbind(node);this.dispatchEventToListeners(SDK.DOMModel.Events.NodeRemoved,{node:node,parent:parent});this._scheduleMutationEvent(node);}
 _shadowRootPushed(hostId,root){var host=this._idToDOMNode[hostId];if(!host)
 return;var node=SDK.DOMNode.create(this,host.ownerDocument,true,root);node.parentNode=host;this._idToDOMNode[node.id]=node;host._shadowRoots.unshift(node);this.dispatchEventToListeners(SDK.DOMModel.Events.NodeInserted,node);this._scheduleMutationEvent(node);}
@@ -5239,11 +5239,12 @@ frameAttached(frameId,parentFrameId,stackTrace){this._resourceTreeModel._frameAt
 frameNavigated(frame){this._resourceTreeModel._frameNavigated(frame);}
 frameDetached(frameId){this._resourceTreeModel._frameDetached(frameId);}
 frameStartedLoading(frameId){}
-frameStoppedLoading(frameId){window.document.dispatchEvent(new CustomEvent('UPDATED_DOCUMENT'));}
+frameStoppedLoading(frameId){}
 frameScheduledNavigation(frameId,delay){}
 frameClearedScheduledNavigation(frameId){}
 frameResized(){this._resourceTreeModel.dispatchEventToListeners(SDK.ResourceTreeModel.Events.FrameResized,null);}
-javascriptDialogOpening(url,message,dialogType,prompt){let obj={ url: url, message: message, dialogType: dialogType, prompt: prompt };window.document.dispatchEvent(new CustomEvent("DIALOG_OPENED", { detail: obj }));}
+javascriptDialogOpening(url,message,dialogType,prompt){
+}
 javascriptDialogClosed(result,userInput){}
 screencastFrame(data,metadata,sessionId){}
 screencastVisibilityChanged(visible){}
