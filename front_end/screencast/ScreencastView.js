@@ -656,7 +656,7 @@ Screencast.ScreencastView = class extends UI.VBox {
 
   async _requestNavigationHistory() {
     var history = await this._resourceTreeModel.navigationHistory();
-    if (!history)
+    if (!history || history.currentIndex == -1)
       return;
 
     this._historyIndex = history.currentIndex;
