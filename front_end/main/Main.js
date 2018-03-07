@@ -309,7 +309,9 @@ Main.Main = class {
 
   _reinitializeTarget() {
     console.log('started to reinitialize');
-    Runtime._queryParamsObject['ws'] = window.getWSUrl();
+    var protocol = window.location.protocol.replace(/^http/, 'ws');
+    protocol = protocol.substring(0, protocol.length - 1);
+    Runtime._queryParamsObject[protocol] = window.getWSUrl();
 
     SDK.targetManager.reconnectToMainTarget();
 
