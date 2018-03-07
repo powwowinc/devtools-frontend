@@ -1085,7 +1085,9 @@ Runtime.Experiment = class {
 window.runtimeInit = function() {
   {
     (function parseQueryParameters() {
-      Runtime._queryParamsObject['ws'] = window.getWSUrl();
+      var protocol = window.location.protocol.replace(/^http/, 'ws');
+      protocol = protocol.substring(0, protocol.length - 1);
+      Runtime._queryParamsObject[protocol] = window.getWSUrl();
       Runtime._queryParamsObject['can_dock'] = true;
       Runtime._queryParamsObject['dock-side'] = 'right';
       Runtime._queryParamsObject['remoteFrontend'] = true;
