@@ -134,7 +134,7 @@ cleanedUpExperimentSetting[experimentName]=true;}
 this._setExperimentsSetting(cleanedUpExperimentSetting);}
 _checkExperiment(experimentName){Runtime._assert(this._experimentNames[experimentName],'Unknown experiment '+experimentName);}};Runtime.Experiment=class{constructor(experiments,name,title,hidden){this.name=name;this.title=title;this.hidden=hidden;this._experiments=experiments;}
 isEnabled(){return this._experiments.isEnabled(this.name);}
-setEnabled(enabled){this._experiments.setEnabled(this.name,enabled);}};window.runtimeInit=function(){{(function parseQueryParameters(){Runtime._queryParamsObject['ws'] = window.getWSUrl();Runtime._queryParamsObject['can_dock'] = true;Runtime._queryParamsObject['dock-side'] = 'right';Runtime._queryParamsObject['remoteFrontend'] = true;Runtime._queryParamsObject['experiments'] = true;})();}
+setEnabled(enabled){this._experiments.setEnabled(this.name,enabled);}};window.runtimeInit=function(){{(function parseQueryParameters(){var protocol=window.location.protocol.replace(/^http/,'ws');protocol=protocol.substring(0,protocol.length-1);Runtime._queryParamsObject[protocol]=window.getWSUrl();Runtime._queryParamsObject['can_dock']=true;Runtime._queryParamsObject['dock-side']='right';Runtime._queryParamsObject['remoteFrontend']=true;Runtime._queryParamsObject['experiments']=true;})();}
 Runtime.experiments=new Runtime.ExperimentsSupport();Runtime._remoteBase=Runtime.queryParam('remoteBase');{(function validateRemoteBase(){var remoteBaseRegexp=/^https:\/\/chrome-devtools-frontend\.appspot\.com\/serve_file\/@[0-9a-zA-Z]+\/?$/;if(Runtime._remoteBase&&!remoteBaseRegexp.test(Runtime._remoteBase))
 Runtime._remoteBase=null;})();}
 function ServicePort(){}

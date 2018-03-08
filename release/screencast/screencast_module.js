@@ -10,8 +10,8 @@ this._activeTouchOffsetTop=null;if(event.type==='mousedown')
 params.clickCount=1;this._inputAgent.invoke_emulateTouchFromMouseEvent(params);}
 cancelTouch(){if(this._activeTouchOffsetTop!==null){var params=this._activeTouchParams;this._activeTouchParams=null;params.type='mouseReleased';this._inputAgent.invoke_emulateTouchFromMouseEvent(params);}}
 _modifiersForEvent(event){return(event.altKey?1:0)|(event.ctrlKey?2:0)|(event.metaKey?4:0)|(event.shiftKey?8:0);}};SDK.SDKModel.register(Screencast.InputModel,SDK.Target.Capability.Input,false);;Screencast.ScreencastApp=class{constructor(){this._enabledSetting=Common.settings.createSetting('screencastEnabled',true);this._toggleButton=new UI.ToolbarToggle(Common.UIString('Toggle screencast'),'largeicon-phone');this._toggleButton.setToggled(this._enabledSetting.get());this._toggleButton.setEnabled(true);this._toggleButton.addEventListener(UI.ToolbarButton.Events.Click,this._toggleButtonClicked,this);SDK.targetManager.observeModels(SDK.ScreenCaptureModel,this);}
-static _instance(){if(!Screencast.ScreencastApp._appInstance)Screencast.ScreencastApp._appInstance=new Screencast.ScreencastApp();
-return Screencast.ScreencastApp._appInstance;}
+static _instance(renewal){if(!Screencast.ScreencastApp._appInstance)
+Screencast.ScreencastApp._appInstance=new Screencast.ScreencastApp();return Screencast.ScreencastApp._appInstance;}
 presentUI(document){var rootView=new UI.RootView();this._rootSplitWidget=new UI.SplitWidget(false,true,'InspectorView.screencastSplitViewState',300,300);this._rootSplitWidget.setVertical(true);this._rootSplitWidget.setSecondIsSidebar(true);this._rootSplitWidget.show(rootView.element);this._rootSplitWidget.hideMain();this._rootSplitWidget.setSidebarWidget(UI.inspectorView);rootView.attachToDocument(document);rootView.focus();}
 modelAdded(screenCaptureModel){if(this._screenCaptureModel)
 return;this._screenCaptureModel=screenCaptureModel;this._toggleButton.setEnabled(true);this._screencastView=new Screencast.ScreencastView(screenCaptureModel);this._rootSplitWidget.setMainWidget(this._screencastView);this._screencastView.initialize();this._onScreencastEnabledChanged();window.document.dispatchEvent(new CustomEvent('SCREENCAST_APP_CONSTRUCTED'));}
@@ -97,7 +97,7 @@ _navigationUrlKeyUp(event){if(event.key!=='Enter')
 return;var url=this._navigationUrl.value;if(!url)
 return;if(!url.match(Screencast.ScreencastView._SchemeRegex))
 url='http://'+url;this._resourceTreeModel.navigate(url);this._canvasElement.focus();}
-async _requestNavigationHistory(){var history=await this._resourceTreeModel.navigationHistory();if(!history)
+async _requestNavigationHistory(){var history=await this._resourceTreeModel.navigationHistory();if(!history||history.currentIndex==-1)
 return;this._historyIndex=history.currentIndex;this._historyEntries=history.entries;this._navigationBack.disabled=this._historyIndex===0;this._navigationForward.disabled=this._historyIndex===(this._historyEntries.length-1);var url=this._historyEntries[this._historyIndex].url;var match=url.match(Screencast.ScreencastView._HttpRegex);if(match)
 url=match[1];InspectorFrontendHost.inspectedURLChanged(url);this._navigationUrl.value=url;}
 _focusNavigationBar(){this._navigationUrl.focus();this._navigationUrl.select();return true;}};Screencast.ScreencastView._bordersSize=1;Screencast.ScreencastView._navBarHeight=40;Screencast.ScreencastView._HttpRegex=/^http:\/\/(.+)/;Screencast.ScreencastView._SchemeRegex=/^(https?|about|chrome):/;Screencast.ScreencastView.ProgressTracker=class{constructor(resourceTreeModel,networkManager,element){this._element=element;if(resourceTreeModel){resourceTreeModel.addEventListener(SDK.ResourceTreeModel.Events.MainFrameNavigated,this._onMainFrameNavigated,this);resourceTreeModel.addEventListener(SDK.ResourceTreeModel.Events.Load,this._onLoad,this);}

@@ -437,7 +437,7 @@ get isXMLMimeType(){return this._isXMLMimeType;}
 selectedDOMNode(){return this._selectedDOMNode;}
 selectDOMNode(node,focus){if(this._selectedDOMNode===node){this._revealAndSelectNode(node,!focus);return;}
 this._selectedDOMNode=node;this._revealAndSelectNode(node,!focus);if(this._selectedDOMNode===node)
-this._selectedNodeChanged(!!focus);if(focus) window.document.dispatchEvent(new CustomEvent('DOM_NODE_SELECTED', { detail: node }));}
+this._selectedNodeChanged(!!focus);if(focus)window.document.dispatchEvent(new CustomEvent('DOM_NODE_SELECTED',{detail:node}));}
 editing(){var node=this.selectedDOMNode();if(!node)
 return false;var treeElement=this.findTreeElement(node);if(!treeElement)
 return false;return treeElement.isEditing()||false;}
