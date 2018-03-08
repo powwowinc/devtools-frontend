@@ -18,6 +18,10 @@ var devtoolsPath = path.resolve(path.join(__dirname, '../..'));
 var frontendPath = path.join(devtoolsPath, 'front_end');
 var releasePath = path.join(devtoolsPath, 'release');
 var scriptsPath = path.join(devtoolsPath, 'scripts');
+var versionPath = path.join(devtoolsPath, 'versions.json');
+var versions = require(versionPath);
+var commitHash = versions.commitHash;
+var v8Version = versions.v8;
 
 gulp.task('default', ['build']);
 
@@ -77,11 +81,11 @@ function concatenateProtocolTask() {
 gulp.task('fetchProtocol', ['clean'], fetchProtocolTask);
 function fetchProtocolTask(done) {
   var browserProtocolURL =
-      'https://chromium.googlesource.com/chromium/src/+/master/third_party/WebKit/Source/core/inspector/browser_protocol.json?format=TEXT';
+      `https://chromium.googlesource.com/chromium/src/+/${commitHash}/third_party/WebKit/Source/core/inspector/browser_protocol.json?format=TEXT`;
   var browserProtocolFile = path.join(releasePath, 'browser_protocol.json');
   var browserProtocolPromise = fetchAndSaveCodePromise(browserProtocolURL, browserProtocolFile);
 
-  var jsProtocolURL = 'https://chromium.googlesource.com/v8/v8/+/master/src/inspector/js_protocol.json?format=TEXT';
+  var jsProtocolURL = `https://chromium.googlesource.com/v8/v8/+/${v8Version}/src/inspector/js_protocol.json?format=TEXT`;
   var jsProtocolFile = path.join(releasePath, 'js_protocol.json');
   var jsProtocolPromise = fetchAndSaveCodePromise(jsProtocolURL, jsProtocolFile);
 
