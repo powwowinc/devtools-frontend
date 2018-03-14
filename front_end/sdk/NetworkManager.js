@@ -49,6 +49,14 @@ SDK.NetworkManager = class extends SDK.SDKModel {
     else
       this._networkAgent.enable();
 
+    var requestInterceptionUrls = Runtime.queryParam('requestInterceptionUrls');
+    if(requestInterceptionUrls) {
+      var arrUrls = requestInterceptionUrls.split('|');
+      this._networkAgent.setRequestInterceptionEnabled(true, arrUrls);
+    } else {
+      this._networkAgent.setRequestInterceptionEnabled(false);
+    }
+
     this._bypassServiceWorkerSetting = Common.settings.createSetting('bypassServiceWorker', false);
     if (this._bypassServiceWorkerSetting.get())
       this._bypassServiceWorkerChanged();

@@ -312,7 +312,7 @@ Main.Main = class {
     var protocol = window.location.protocol.replace(/^http/, 'ws');
     protocol = protocol.substring(0, protocol.length - 1);
     Runtime._queryParamsObject[protocol] = window.getWSUrl();
-
+    Runtime._queryParamsObject['requestInterceptionUrls'] = window.getRequestInterceptionUrls();
     SDK.targetManager.reconnectToMainTarget();
 
     InspectorFrontendHost.readyForTest();
