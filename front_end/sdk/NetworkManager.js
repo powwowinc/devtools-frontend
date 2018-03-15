@@ -49,6 +49,7 @@ SDK.NetworkManager = class extends SDK.SDKModel {
     else
       this._networkAgent.enable();
 
+    // STUDIO-2361: Allow www-authentication.
     var requestInterceptionUrls = Runtime.queryParam('requestInterceptionUrls');
     if(requestInterceptionUrls) {
       var arrUrls = requestInterceptionUrls.split('|');
@@ -56,6 +57,11 @@ SDK.NetworkManager = class extends SDK.SDKModel {
     } else {
       this._networkAgent.setRequestInterceptionEnabled(false);
     }
+
+    // STUDIO-2501 - Handle security errors.
+    var securityAgent = target.securityAgent();
+    securityAgent.enable();
+    securityAgent.setOverrideCertificateErrors(true);
 
     this._bypassServiceWorkerSetting = Common.settings.createSetting('bypassServiceWorker', false);
     if (this._bypassServiceWorkerSetting.get())
