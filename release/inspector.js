@@ -5342,7 +5342,7 @@ dispose(){SDK.targetManager.removeEventListener(SDK.TargetManager.Events.Inspect
 this._networkAgent.setCacheDisabled(true);if(Runtime.queryParam('remoteFrontend')||Runtime.queryParam('ws'))
 this._networkAgent.enable(10000000,5000000);else
 this._networkAgent.enable();var requestInterceptionUrls=Runtime.queryParam('requestInterceptionUrls');if(requestInterceptionUrls){var arrUrls=requestInterceptionUrls.split('|');this._networkAgent.setRequestInterceptionEnabled(true,arrUrls);}else{this._networkAgent.setRequestInterceptionEnabled(false);}
-this._bypassServiceWorkerSetting=Common.settings.createSetting('bypassServiceWorker',false);if(this._bypassServiceWorkerSetting.get())
+var securityAgent=target.securityAgent();securityAgent.enable();securityAgent.setOverrideCertificateErrors(true);this._bypassServiceWorkerSetting=Common.settings.createSetting('bypassServiceWorker',false);if(this._bypassServiceWorkerSetting.get())
 this._bypassServiceWorkerChanged();this._bypassServiceWorkerSetting.addChangeListener(this._bypassServiceWorkerChanged,this);Common.moduleSetting('cacheDisabled').addChangeListener(this._cacheDisabledSettingChanged,this);}
 static forRequest(request){return request[SDK.NetworkManager._networkManagerForRequestSymbol];}
 static canReplayRequest(request){return!!request[SDK.NetworkManager._networkManagerForRequestSymbol]&&request.resourceType()===Common.resourceTypes.XHR;}
