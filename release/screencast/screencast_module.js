@@ -50,7 +50,7 @@ this._inputModel.emitTouchFromMouseEvent(event,this._screenOffsetTop,this._scree
 this._canvasElement.focus();return;}
 var position=this._convertIntoScreenSpace(event);var node=await this._domModel.nodeForLocation(Math.floor(position.x/this._pageScaleFactor+this._scrollOffsetX),Math.floor(position.y/this._pageScaleFactor+this._scrollOffsetY),Common.moduleSetting('showUAShadowDOM').get());if(!node)
 return;if(event.type==='mousemove'){this.highlightDOMNode(node,this._inspectModeConfig);this._domModel.overlayModel().nodeHighlightRequested(node.id);}else if(event.type==='click'){Common.Revealer.reveal(node);}}
-_handleKeyEvent(event){if(this._isGlassPaneActive()){event.consume();return;}
+_handleKeyEvent(event){var TABKEY=9;if(event.keyCode===TABKEY)event.preventDefault();if(this._isGlassPaneActive()){event.consume();return;}
 var shortcutKey=UI.KeyboardShortcut.makeKeyFromEvent((event));var handler=this._shortcuts[shortcutKey];if(handler&&handler(event)){event.consume();return;}
 if(this._inputModel)
 this._inputModel.emitKeyEvent(event);event.consume();this._canvasElement.focus();}

@@ -254,6 +254,9 @@ Screencast.ScreencastView = class extends UI.VBox {
    * @param {!Event} event
    */
   _handleKeyEvent(event) {
+    var TABKEY = 9;
+    if (event.keyCode === TABKEY) event.preventDefault();
+
     if (this._isGlassPaneActive()) {
       event.consume();
       return;
