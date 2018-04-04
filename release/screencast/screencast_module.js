@@ -46,8 +46,8 @@ _updateGlasspane(){if(this._targetInactive){this._glassPaneElement.textContent=C
 async _handleMouseEvent(event){if(this._isGlassPaneActive()){event.consume();return;}
 if(!this._pageScaleFactor||!this._domModel)
 return;if(!this._inspectModeConfig||event.type==='mousewheel'){if(this._inputModel)
-this._inputModel.emitTouchFromMouseEvent(event,this._screenOffsetTop,this._screenZoom);event.preventDefault();if(event.type==='mousedown')
-this._canvasElement.focus();return;}
+this._inputModel.emitTouchFromMouseEvent(event,this._screenOffsetTop,this._screenZoom);event.preventDefault();if(event.type==='mousedown'){this._canvasElement.focus();var position=this._convertIntoScreenSpace(event);let offsetX=event.offsetX;let offsetY=event.offsetY;var node=await this._domModel.nodeForLocation(Math.floor(position.x/this._pageScaleFactor+this._scrollOffsetX),Math.floor(position.y/this._pageScaleFactor+this._scrollOffsetY),Common.moduleSetting('showUAShadowDOM').get());window.getSelectData(node,offsetX,offsetY);event.stopPropagation();}
+return;}
 var position=this._convertIntoScreenSpace(event);var node=await this._domModel.nodeForLocation(Math.floor(position.x/this._pageScaleFactor+this._scrollOffsetX),Math.floor(position.y/this._pageScaleFactor+this._scrollOffsetY),Common.moduleSetting('showUAShadowDOM').get());if(!node)
 return;if(event.type==='mousemove'){this.highlightDOMNode(node,this._inspectModeConfig);this._domModel.overlayModel().nodeHighlightRequested(node.id);}else if(event.type==='click'){Common.Revealer.reveal(node);}}
 _handleKeyEvent(event){var TABKEY=9;if(event.keyCode===TABKEY)event.preventDefault();if(this._isGlassPaneActive()){event.consume();return;}

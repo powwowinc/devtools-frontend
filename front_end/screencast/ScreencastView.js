@@ -228,8 +228,23 @@ Screencast.ScreencastView = class extends UI.VBox {
       if (this._inputModel)
         this._inputModel.emitTouchFromMouseEvent(event, this._screenOffsetTop, this._screenZoom);
       event.preventDefault();
-      if (event.type === 'mousedown')
+      if (event.type === 'mousedown') {
         this._canvasElement.focus();
+
+        /* POWWOW ADDED */
+        var position = this._convertIntoScreenSpace(event);
+        let offsetX = event.offsetX;
+        let offsetY = event.offsetY;
+
+        var node = await this._domModel.nodeForLocation(
+            Math.floor(position.x / this._pageScaleFactor + this._scrollOffsetX),
+            Math.floor(position.y / this._pageScaleFactor + this._scrollOffsetY),
+            Common.moduleSetting('showUAShadowDOM').get());
+            
+        window.getSelectData(node, offsetX, offsetY);
+        event.stopPropagation();
+        /* POWWOW ADDED */
+      }
       return;
     }
 
