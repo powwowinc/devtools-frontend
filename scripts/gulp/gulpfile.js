@@ -107,7 +107,7 @@ function generateSupportedCSSProperties() {
 gulp.task('fetchSupportedCSSProperties', ['clean'], fetchSupportedCSSProperties);
 function fetchSupportedCSSProperties(done) {
   var supportedCSSPropertiesURL =
-      'https://chromium.googlesource.com/chromium/src/+/master/third_party/WebKit/Source/core/css/CSSProperties.json5?format=TEXT';
+      `https://chromium.googlesource.com/chromium/src/+/${commitHash}/third_party/WebKit/Source/core/css/CSSProperties.json5?format=TEXT`;
   var supportedCSSPropertiesFile = path.join(releasePath, 'CSSProperties.json5');
   fetchAndSaveCodePromise(supportedCSSPropertiesURL, supportedCSSPropertiesFile)
       .then(() => done())
