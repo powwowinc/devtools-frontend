@@ -9,10 +9,10 @@ It is available on NPM as the [chrome-devtools-frontend](https://www.npmjs.com/p
 
 ### Powwow Development
 1. Make changes
-2. `cd` to [a relative link](scripts/gulp/gulpfile.js) and run `gulp build`
+2. `cd` to [gulp dir](scripts/gulp) and run `gulp build`
 3. Push to Github
 4. Tag the repo and Push tags to Github (We are incrementing the last number of the Chromium version)
-5. Make sure to update bower.json of [a link](https://github.com/powwowinc/PowwowDesigner/tree/6.0) webapp with the new version
+5. Make sure to update bower.json of [Studio](https://github.com/powwowinc/PowwowDesigner/tree/6.0) webapp with the new version
 
 ### Source code
 The frontend is available through a git subtree mirror on [chromium.googlesource.com](https://chromium.googlesource.com/chromium/src/third_party/WebKit/Source/devtools/), with a regularly updating GitHub mirror at [github.com/ChromeDevTools/devtools-frontend](https://github.com/ChromeDevTools/devtools-frontend). The codebase's true location is in `third_party/WebKit/Source/devtools/` in [Chromium's git repo](https://chromium.googlesource.com/chromium/src/).
