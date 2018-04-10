@@ -242,6 +242,7 @@ Screencast.ScreencastView = class extends UI.VBox {
             Common.moduleSetting('showUAShadowDOM').get());
             
         window.getSelectData(node, offsetX, offsetY);
+        window.showFileUpload(node, offsetX, offsetY);
         event.stopPropagation();
         /* POWWOW ADDED */
       }
