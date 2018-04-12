@@ -863,19 +863,20 @@ SDK.MultitargetNetworkManager = class extends Common.Object {
 
     /* POWWOW ADDED - moved from TargetManager STUDIO-2361: Allow www-authentication. */
     let requestInterceptionUrls = Runtime.queryParam('requestInterceptionUrls');
-    let arrUrls = requestInterceptionUrls.split('|');
+    if (requestInterceptionUrls) {
+      let arrUrls = requestInterceptionUrls.split('|');
 
-    let patterns = [];
-    if (arrUrls.length) {
-        for (let urlPattern of arrUrls) {
-            patterns.push({
-                interceptionStage: 'Response',
-                urlPattern: urlPattern
-            });
-        }
+      let patterns = [];
+      if (arrUrls.length) {
+          for (let urlPattern of arrUrls) {
+              patterns.push({
+                  interceptionStage: 'Response',
+                  urlPattern: urlPattern
+              });
+          }
+      }
+      this.setInterceptionHandlerForPatterns(patterns, window.requestInterceptor);
     }
-
-    this.setInterceptionHandlerForPatterns(patterns, window.requestInterceptor);
     /* POWWOW ADDED */
 
     SDK.targetManager.observeTargets(this, SDK.Target.Capability.Network);
