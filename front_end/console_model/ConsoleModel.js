@@ -41,6 +41,7 @@ ConsoleModel.ConsoleModel = class extends Common.Object {
     this._messageByExceptionId = new Map();
     this._warnings = 0;
     this._errors = 0;
+    this._pageLoadSequenceNumber = 0;
 
     SDK.targetManager.observeTargets(this);
   }
@@ -97,6 +98,8 @@ ConsoleModel.ConsoleModel = class extends Common.Object {
           SDK.RuntimeModel.Events.ConsoleAPICalled, this._consoleAPICalled.bind(this, runtimeModel)));
       eventListeners.push(runtimeModel.debuggerModel().addEventListener(
           SDK.DebuggerModel.Events.GlobalObjectCleared, this._clearIfNecessary, this));
+      eventListeners.push(runtimeModel.addEventListener(
+          SDK.RuntimeModel.Events.QueryObjectRequested, this._queryObjectRequested.bind(this, runtimeModel)));
     }
 
     var networkManager = target.model(SDK.NetworkManager);
@@ -167,6 +170,7 @@ ConsoleModel.ConsoleModel = class extends Common.Object {
     if (msg.source === ConsoleModel.ConsoleMessage.MessageSource.Worker && SDK.targetManager.targetById(msg.workerId))
       return;
 
+    msg._pageLoadSequenceNumber = this._pageLoadSequenceNumber;
     if (msg.source === ConsoleModel.ConsoleMessage.MessageSource.ConsoleAPI &&
         msg.type === ConsoleModel.ConsoleMessage.MessageType.Clear)
       this._clearIfNecessary();
@@ -192,8 +196,9 @@ ConsoleModel.ConsoleModel = class extends Common.Object {
     var data = /** @type {{logModel: !SDK.LogModel, entry: !Protocol.Log.LogEntry}} */ (event.data);
     var consoleMessage = new ConsoleModel.ConsoleMessage(
         data.logModel.target().model(SDK.RuntimeModel), data.entry.source, data.entry.level, data.entry.text, undefined,
-        data.entry.url, data.entry.lineNumber, undefined, data.entry.networkRequestId, undefined, data.entry.stackTrace,
-        data.entry.timestamp, undefined, undefined, data.entry.workerId);
+        data.entry.url, data.entry.lineNumber, undefined, data.entry.networkRequestId,
+        [data.entry.text, ...(data.entry.args || [])], data.entry.stackTrace, data.entry.timestamp, undefined,
+        undefined, data.entry.workerId);
     this.addMessage(consoleMessage);
   }
 
@@ -244,8 +249,10 @@ ConsoleModel.ConsoleModel = class extends Common.Object {
         call.type === ConsoleModel.ConsoleMessage.MessageType.Log)
       level = ConsoleModel.ConsoleMessage.MessageLevel.Info;
     var message = '';
-    if (call.args.length && typeof call.args[0].value === 'string')
-      message = call.args[0].value;
+    if (call.args.length && call.args[0].unserializableValue)
+      message = call.args[0].unserializableValue;
+    else if (call.args.length && (typeof call.args[0].value !== 'object' || call.args[0].value === null))
+      message = call.args[0].value + '';
     else if (call.args.length && call.args[0].description)
       message = call.args[0].description;
     var callFrame = call.stackTrace && call.stackTrace.callFrames.length ? call.stackTrace.callFrames[0] : null;
@@ -257,9 +264,22 @@ ConsoleModel.ConsoleModel = class extends Common.Object {
     this.addMessage(consoleMessage);
   }
 
+  /**
+   * @param {!SDK.RuntimeModel} runtimeModel
+   * @param {!Common.Event} event
+   */
+  _queryObjectRequested(runtimeModel, event) {
+    var consoleMessage = new ConsoleModel.ConsoleMessage(
+        runtimeModel, ConsoleModel.ConsoleMessage.MessageSource.ConsoleAPI,
+        ConsoleModel.ConsoleMessage.MessageLevel.Info, '', undefined, undefined, undefined, undefined, undefined,
+        [event.data.objects], undefined, undefined, undefined, undefined, undefined, undefined);
+    this.addMessage(consoleMessage);
+  }
+
   _clearIfNecessary() {
     if (!Common.moduleSetting('preserveConsoleLog').get())
       this._clear();
+    ++this._pageLoadSequenceNumber;
   }
 
   /**
@@ -538,6 +558,27 @@ ConsoleModel.ConsoleMessage = class {
   }
 
   /**
+   * @return {boolean}
+   */
+  isGroupable() {
+    var isUngroupableError = this.level === ConsoleModel.ConsoleMessage.MessageLevel.Error &&
+        (this.source === ConsoleModel.ConsoleMessage.MessageSource.JS ||
+         this.source === ConsoleModel.ConsoleMessage.MessageSource.Network);
+    return (
+        this.source !== ConsoleModel.ConsoleMessage.MessageSource.ConsoleAPI &&
+        this.type !== ConsoleModel.ConsoleMessage.MessageType.Command &&
+        this.type !== ConsoleModel.ConsoleMessage.MessageType.Result &&
+        this.type !== ConsoleModel.ConsoleMessage.MessageType.System && !isUngroupableError);
+  }
+
+  /**
+   * @return {string}
+   */
+  groupCategoryKey() {
+    return [this.source, this.level, this.type, this._pageLoadSequenceNumber].join(':');
+  }
+
+  /**
    * @param {?ConsoleModel.ConsoleMessage} msg
    * @return {boolean}
    */
@@ -594,7 +635,7 @@ ConsoleModel.ConsoleMessage = class {
   }
 };
 
-// Note: Keep these constants in sync with the ones in Console.h
+// Note: Keep these constants in sync with the ones in ConsoleTypes.h
 /**
  * @enum {string}
  */
@@ -612,6 +653,7 @@ ConsoleModel.ConsoleMessage.MessageSource = {
   Worker: 'worker',
   Violation: 'violation',
   Intervention: 'intervention',
+  Recommendation: 'recommendation',
   Other: 'other'
 };
 
@@ -636,7 +678,8 @@ ConsoleModel.ConsoleMessage.MessageType = {
   Result: 'result',
   Profile: 'profile',
   ProfileEnd: 'profileEnd',
-  Command: 'command'
+  Command: 'command',
+  System: 'system'
 };
 
 /**
@@ -648,6 +691,24 @@ ConsoleModel.ConsoleMessage.MessageLevel = {
   Warning: 'warning',
   Error: 'error'
 };
+
+/** @type {!Map<!ConsoleModel.ConsoleMessage.MessageSource, string>} */
+ConsoleModel.ConsoleMessage.MessageSourceDisplayName = new Map([
+  [ConsoleModel.ConsoleMessage.MessageSource.XML, 'xml'], [ConsoleModel.ConsoleMessage.MessageSource.JS, 'javascript'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Network, 'network'],
+  [ConsoleModel.ConsoleMessage.MessageSource.ConsoleAPI, 'console-api'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Storage, 'storage'],
+  [ConsoleModel.ConsoleMessage.MessageSource.AppCache, 'appcache'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Rendering, 'rendering'],
+  [ConsoleModel.ConsoleMessage.MessageSource.CSS, 'css'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Security, 'security'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Deprecation, 'deprecation'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Worker, 'worker'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Violation, 'violation'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Intervention, 'intervention'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Recommendation, 'recommendation'],
+  [ConsoleModel.ConsoleMessage.MessageSource.Other, 'other']
+]);
 
 ConsoleModel.ConsoleModel._events = Symbol('ConsoleModel.ConsoleModel.events');
 

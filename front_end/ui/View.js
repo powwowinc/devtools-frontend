@@ -346,9 +346,10 @@ UI.ViewManager = class {
   /**
    * @param {string} viewId
    * @param {boolean=} userGesture
+   * @param {boolean=} omitFocus
    * @return {!Promise}
    */
-  showView(viewId, userGesture) {
+  showView(viewId, userGesture, omitFocus) {
     var view = this._views.get(viewId);
     if (!view) {
       console.error('Could not find view for id: \'' + viewId + '\' ' + new Error().stack);
@@ -356,20 +357,18 @@ UI.ViewManager = class {
     }
 
     var locationName = this._locationNameByViewId.get(viewId);
-    if (locationName === 'drawer-view')
-      Host.userMetrics.drawerShown(viewId);
 
     var location = view[UI.ViewManager._Location.symbol];
     if (location) {
       location._reveal();
-      return location.showView(view, undefined, userGesture);
+      return location.showView(view, undefined, userGesture, omitFocus);
     }
 
     return this._resolveLocation(locationName).then(location => {
       if (!location)
         throw new Error('Could not resolve location for view: ' + viewId);
       location._reveal();
-      return location.showView(view, undefined, userGesture);
+      return location.showView(view, undefined, userGesture, omitFocus);
     });
   }
 
@@ -467,7 +466,13 @@ UI.ViewManager._ContainerWidget = class extends UI.VBox {
    * @override
    */
   wasShown() {
-    this._materialize();
+    this._materialize().then(() => {
+      this._wasShownForTest();
+    });
+  }
+
+  _wasShownForTest() {
+    // This method is sniffed in tests.
   }
 };
 
@@ -484,6 +489,7 @@ UI.ViewManager._ExpandableContainerWidget = class extends UI.VBox {
     this.registerRequiredCSS('ui/viewContainers.css');
 
     this._titleElement = createElementWithClass('div', 'expandable-view-title');
+    UI.ARIAUtils.markAsLink(this._titleElement);
     this._titleExpandIcon = UI.Icon.create('smallicon-triangle-right', 'title-expand-icon');
     this._titleElement.appendChild(this._titleExpandIcon);
     this._titleElement.createTextChild(view.title());
@@ -522,6 +528,7 @@ UI.ViewManager._ExpandableContainerWidget = class extends UI.VBox {
     if (this._titleElement.classList.contains('expanded'))
       return this._materialize();
     this._titleElement.classList.add('expanded');
+    UI.ARIAUtils.setExpanded(this._titleElement, true);
     this._titleExpandIcon.setIconType('smallicon-triangle-down');
     return this._materialize().then(() => this._widget.show(this.element));
   }
@@ -530,6 +537,7 @@ UI.ViewManager._ExpandableContainerWidget = class extends UI.VBox {
     if (!this._titleElement.classList.contains('expanded'))
       return;
     this._titleElement.classList.remove('expanded');
+    UI.ARIAUtils.setExpanded(this._titleElement, false);
     this._titleExpandIcon.setIconType('smallicon-triangle-right');
     this._materialize().then(() => this._widget.detach());
   }
@@ -545,8 +553,16 @@ UI.ViewManager._ExpandableContainerWidget = class extends UI.VBox {
    * @param {!Event} event
    */
   _onTitleKeyDown(event) {
-    if (isEnterKey(event) || event.keyCode === UI.KeyboardShortcut.Keys.Space.code)
+    if (isEnterKey(event) || event.keyCode === UI.KeyboardShortcut.Keys.Space.code) {
       this._toggleExpanded();
+    } else if (event.key === 'ArrowLeft') {
+      this._collapse();
+    } else if (event.key === 'ArrowRight') {
+      if (!this._titleElement.classList.contains('expanded'))
+        this._expand();
+      else if (this._widget)
+        this._widget.focus();
+    }
   }
 };
 
@@ -684,7 +700,7 @@ UI.ViewManager._TabbedLocation = class extends UI.ViewManager._Location {
     views.sort((viewa, viewb) => viewa.title().localeCompare(viewb.title()));
     for (var view of views) {
       var title = Common.UIString(view.title());
-      contextMenu.appendItem(title, this.showView.bind(this, view, undefined, true));
+      contextMenu.defaultSection().appendItem(title, this.showView.bind(this, view, undefined, true));
     }
   }
 
@@ -747,12 +763,14 @@ UI.ViewManager._TabbedLocation = class extends UI.ViewManager._Location {
    * @param {!UI.View} view
    * @param {?UI.View=} insertBefore
    * @param {boolean=} userGesture
+   * @param {boolean=} omitFocus
    * @return {!Promise}
    */
-  showView(view, insertBefore, userGesture) {
+  showView(view, insertBefore, userGesture, omitFocus) {
     this.appendView(view, insertBefore);
     this._tabbedPane.selectTab(view.viewId(), userGesture);
-    this._tabbedPane.focus();
+    if (!omitFocus)
+      this._tabbedPane.focus();
     var widget = /** @type {!UI.ViewManager._ContainerWidget} */ (this._tabbedPane.tabView(view.viewId()));
     return widget._materialize();
   }

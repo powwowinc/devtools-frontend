@@ -9,22 +9,22 @@
 Persistence.Automapping = class {
   /**
    * @param {!Workspace.Workspace} workspace
-   * @param {function(!Persistence.PersistenceBinding)} onBindingCreated
-   * @param {function(!Persistence.PersistenceBinding)} onBindingRemoved
+   * @param {function(!Persistence.AutomappingBinding)} onBindingCreated
+   * @param {function(!Persistence.AutomappingBinding)} onBindingRemoved
    */
   constructor(workspace, onBindingCreated, onBindingRemoved) {
     this._workspace = workspace;
 
     this._onBindingCreated = onBindingCreated;
     this._onBindingRemoved = onBindingRemoved;
-    /** @type {!Set<!Persistence.PersistenceBinding>} */
+    /** @type {!Set<!Persistence.AutomappingBinding>} */
     this._bindings = new Set();
 
     /** @type {!Map<string, !Workspace.UISourceCode>} */
     this._fileSystemUISourceCodes = new Map();
     this._sweepThrottler = new Common.Throttler(100);
 
-    var pathEncoder = new Persistence.Automapping.PathEncoder();
+    var pathEncoder = new Persistence.PathEncoder();
     this._filesIndex = new Persistence.Automapping.FilePathIndex(pathEncoder);
     this._projectFoldersIndex = new Persistence.Automapping.FolderIndex(pathEncoder);
     this._activeFoldersIndex = new Persistence.Automapping.FolderIndex(pathEncoder);
@@ -104,6 +104,7 @@ Persistence.Automapping = class {
     for (var gitFolder of fileSystem.initialGitFolders())
       this._projectFoldersIndex.addFolder(gitFolder);
     this._projectFoldersIndex.addFolder(fileSystem.fileSystemPath());
+    project.uiSourceCodes().forEach(this._onUISourceCodeAdded.bind(this));
     this._scheduleRemap();
   }
 
@@ -111,11 +112,15 @@ Persistence.Automapping = class {
    * @param {!Workspace.UISourceCode} uiSourceCode
    */
   _onUISourceCodeAdded(uiSourceCode) {
-    if (uiSourceCode.project().type() === Workspace.projectTypes.FileSystem) {
+    var project = uiSourceCode.project();
+    if (project.type() === Workspace.projectTypes.FileSystem) {
+      // Never do bindings to filesystems that are typed to another client.
+      if (Persistence.FileSystemWorkspaceBinding.fileSystemType(project))
+        return;
       this._filesIndex.addPath(uiSourceCode.url());
       this._fileSystemUISourceCodes.set(uiSourceCode.url(), uiSourceCode);
       this._scheduleSweep();
-    } else if (uiSourceCode.project().type() === Workspace.projectTypes.Network) {
+    } else if (project.type() === Workspace.projectTypes.Network) {
       this._bindNetwork(uiSourceCode);
     }
   }
@@ -162,11 +167,47 @@ Persistence.Automapping = class {
     if (networkSourceCode[Persistence.Automapping._processingPromise] ||
         networkSourceCode[Persistence.Automapping._binding])
       return;
-    var createBindingPromise = this._createBinding(networkSourceCode).then(onBinding.bind(this));
+    var createBindingPromise =
+        this._createBinding(networkSourceCode).then(validateBinding.bind(this)).then(onBinding.bind(this));
     networkSourceCode[Persistence.Automapping._processingPromise] = createBindingPromise;
 
     /**
-     * @param {?Persistence.PersistenceBinding} binding
+     * @param {?Persistence.AutomappingBinding} binding
+     * @return {!Promise<?Persistence.AutomappingBinding>}
+     * @this {Persistence.Automapping}
+     */
+    async function validateBinding(binding) {
+      if (!binding)
+        return null;
+      if (binding.network.contentType().isFromSourceMap() || !binding.fileSystem.contentType().isTextType())
+        return binding;
+
+      await Promise.all([binding.network.requestContent(), binding.fileSystem.requestContent()]);
+
+      if (networkSourceCode[Persistence.Automapping._processingPromise] !== createBindingPromise)
+        return null;
+
+      var fileSystemContent = binding.fileSystem.workingCopy();
+      var networkContent = binding.network.workingCopy();
+      var target = Bindings.NetworkProject.targetForUISourceCode(binding.network);
+      var isValid = false;
+      if (target && target.isNodeJS()) {
+        var rewrappedNetworkContent =
+            Persistence.Persistence.rewrapNodeJSContent(binding.fileSystem, fileSystemContent, networkContent);
+        isValid = fileSystemContent === rewrappedNetworkContent;
+      } else {
+        // Trim trailing whitespaces because V8 adds trailing newline.
+        isValid = fileSystemContent.trimRight() === networkContent.trimRight();
+      }
+      if (!isValid) {
+        this._prevalidationFailedForTest(binding);
+        return null;
+      }
+      return binding;
+    }
+
+    /**
+     * @param {?Persistence.AutomappingBinding} binding
      * @this {Persistence.Automapping}
      */
     function onBinding(binding) {
@@ -192,6 +233,12 @@ Persistence.Automapping = class {
       }
       this._onBindingCreated.call(null, binding);
     }
+  }
+
+  /**
+   * @param {!Persistence.AutomappingBinding} binding
+   */
+  _prevalidationFailedForTest(binding) {
   }
 
   _onBindingFailedForTest() {
@@ -222,25 +269,25 @@ Persistence.Automapping = class {
 
   /**
    * @param {!Workspace.UISourceCode} networkSourceCode
-   * @return {!Promise<?Persistence.PersistenceBinding>}
+   * @return {!Promise<?Persistence.AutomappingBinding>}
    */
   _createBinding(networkSourceCode) {
     if (networkSourceCode.url().startsWith('file://')) {
       var fileSourceCode = this._fileSystemUISourceCodes.get(networkSourceCode.url());
       var binding =
-          fileSourceCode ? new Persistence.PersistenceBinding(networkSourceCode, fileSourceCode, false) : null;
+          fileSourceCode ? new Persistence.AutomappingBinding(networkSourceCode, fileSourceCode, false) : null;
       return Promise.resolve(binding);
     }
 
     var networkPath = Common.ParsedURL.extractPath(networkSourceCode.url());
     if (networkPath === null)
-      return Promise.resolve(/** @type {?Persistence.PersistenceBinding} */ (null));
+      return Promise.resolve(/** @type {?Persistence.AutomappingBinding} */ (null));
 
     if (networkPath.endsWith('/'))
       networkPath += 'index.html';
     var similarFiles = this._filesIndex.similarFiles(networkPath).map(path => this._fileSystemUISourceCodes.get(path));
     if (!similarFiles.length)
-      return Promise.resolve(/** @type {?Persistence.PersistenceBinding} */ (null));
+      return Promise.resolve(/** @type {?Persistence.AutomappingBinding} */ (null));
 
     return this._pullMetadatas(similarFiles.concat(networkSourceCode)).then(onMetadatas.bind(this));
 
@@ -254,7 +301,7 @@ Persistence.Automapping = class {
         // If networkSourceCode does not have metadata, try to match against active folders.
         if (activeFiles.length !== 1)
           return null;
-        return new Persistence.PersistenceBinding(networkSourceCode, activeFiles[0], false);
+        return new Persistence.AutomappingBinding(networkSourceCode, activeFiles[0], false);
       }
 
       // Try to find exact matches, prioritizing active folders.
@@ -263,7 +310,7 @@ Persistence.Automapping = class {
         exactMatches = this._filterWithMetadata(similarFiles, networkMetadata);
       if (exactMatches.length !== 1)
         return null;
-      return new Persistence.PersistenceBinding(networkSourceCode, exactMatches[0], true);
+      return new Persistence.AutomappingBinding(networkSourceCode, exactMatches[0], true);
     }
   }
 
@@ -322,35 +369,9 @@ Persistence.Automapping._metadata = Symbol('Automapping.Metadata');
 /**
  * @unrestricted
  */
-Persistence.Automapping.PathEncoder = class {
-  constructor() {
-    /** @type {!Common.CharacterIdMap<string>} */
-    this._encoder = new Common.CharacterIdMap();
-  }
-
-  /**
-   * @param {string} path
-   * @return {string}
-   */
-  encode(path) {
-    return path.split('/').map(token => this._encoder.toChar(token)).join('');
-  }
-
-  /**
-   * @param {string} path
-   * @return {string}
-   */
-  decode(path) {
-    return path.split('').map(token => this._encoder.fromChar(token)).join('/');
-  }
-};
-
-/**
- * @unrestricted
- */
 Persistence.Automapping.FilePathIndex = class {
   /**
-   * @param {!Persistence.Automapping.PathEncoder} encoder
+   * @param {!Persistence.PathEncoder} encoder
    */
   constructor(encoder) {
     this._encoder = encoder;
@@ -392,7 +413,7 @@ Persistence.Automapping.FilePathIndex = class {
  */
 Persistence.Automapping.FolderIndex = class {
   /**
-   * @param {!Persistence.Automapping.PathEncoder} encoder
+   * @param {!Persistence.PathEncoder} encoder
    */
   constructor(encoder) {
     this._encoder = encoder;
@@ -443,5 +464,21 @@ Persistence.Automapping.FolderIndex = class {
     var encodedPath = this._encoder.encode(path);
     var commonPrefix = this._index.longestPrefix(encodedPath, true);
     return this._encoder.decode(commonPrefix);
+  }
+};
+
+/**
+ * @unrestricted
+ */
+Persistence.AutomappingBinding = class {
+  /**
+   * @param {!Workspace.UISourceCode} network
+   * @param {!Workspace.UISourceCode} fileSystem
+   * @param {boolean} exactMatch
+   */
+  constructor(network, fileSystem, exactMatch) {
+    this.network = network;
+    this.fileSystem = fileSystem;
+    this.exactMatch = exactMatch;
   }
 };

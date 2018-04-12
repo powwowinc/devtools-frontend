@@ -49,7 +49,7 @@ async _runScript(scriptId,executionContext,sourceURL){var runtimeModel=execution
 return;if(!result.exceptionDetails)
 this._printRunScriptResult(runtimeModel,result.object||null,scriptId,sourceURL);else
 this._printRunOrCompileScriptResultFailure(runtimeModel,result.exceptionDetails,sourceURL);}
-_printRunScriptResult(runtimeModel,result,scriptId,sourceURL){var consoleMessage=new ConsoleModel.ConsoleMessage(runtimeModel,ConsoleModel.ConsoleMessage.MessageSource.JS,ConsoleModel.ConsoleMessage.MessageLevel.Info,'',undefined,sourceURL,undefined,undefined,undefined,[result],undefined,undefined,undefined,scriptId);ConsoleModel.consoleModel.addMessage(consoleMessage);}
+_printRunScriptResult(runtimeModel,result,scriptId,sourceURL){var consoleMessage=new ConsoleModel.ConsoleMessage(runtimeModel,ConsoleModel.ConsoleMessage.MessageSource.JS,ConsoleModel.ConsoleMessage.MessageLevel.Info,'',ConsoleModel.ConsoleMessage.MessageType.Result,sourceURL,undefined,undefined,undefined,[result],undefined,undefined,undefined,scriptId);ConsoleModel.consoleModel.addMessage(consoleMessage);}
 _printRunOrCompileScriptResultFailure(runtimeModel,exceptionDetails,sourceURL){ConsoleModel.consoleModel.addMessage(ConsoleModel.ConsoleMessage.fromException(runtimeModel,exceptionDetails,undefined,undefined,sourceURL||undefined));}
 _removeBreakpoints(uiSourceCode){var breakpointLocations=Bindings.breakpointManager.breakpointLocationsForUISourceCode(uiSourceCode);for(var i=0;i<breakpointLocations.length;++i)
 breakpointLocations[i].breakpoint.remove();return breakpointLocations;}
@@ -73,14 +73,15 @@ return;var rawLocation=(this._debuggerModel.createRawLocation(script,0,0));var u
 this._scriptSnippetModel._restoreBreakpoints(uiLocation.uiSourceCode,breakpointLocations);}};Snippets.SnippetContentProvider=class{constructor(snippet){this._snippet=snippet;}
 contentURL(){return'';}
 contentType(){return Common.resourceTypes.Snippet;}
+contentEncoded(){return Promise.resolve(false);}
 requestContent(){return Promise.resolve((this._snippet.content));}
 async searchInContent(query,caseSensitive,isRegex){return Common.ContentProvider.performSearchInContent(this._snippet.content,query,caseSensitive,isRegex);}};Snippets.SnippetsProject=class extends Bindings.ContentProviderBasedProject{constructor(workspace,model){super(workspace,'snippets:',Workspace.projectTypes.Snippets,'',false);this._model=model;}
 addSnippet(name,contentProvider){return this.addContentProvider(name,contentProvider,'text/javascript');}
 canSetFileContent(){return true;}
-setFileContent(uiSourceCode,newContent,callback){this._model._setScriptSnippetContent(uiSourceCode.url(),newContent);callback('');}
+setFileContent(uiSourceCode,newContent,isBase64,callback){this._model._setScriptSnippetContent(uiSourceCode.url(),newContent);callback('');}
 canRename(){return true;}
 performRename(url,newName,callback){this._model.renameScriptSnippet(url,newName,callback);}
-createFile(url,name,content,callback){callback(this._model.createScriptSnippet(content));}
+createFile(url,name,content,isBase64){return(Promise.resolve(this._model.createScriptSnippet(content)));}
 deleteFile(uiSourceCode){this._model.deleteScriptSnippet(uiSourceCode);}};Snippets.scriptSnippetModel=new Snippets.ScriptSnippetModel(Workspace.workspace);;Snippets.SnippetsQuickOpen=class extends QuickOpen.FilteredListWidget.Provider{constructor(){super();this._snippets=[];}
 selectItem(itemIndex,promptValue){if(itemIndex===null)
 return;var currentExecutionContext=UI.context.flavor(SDK.ExecutionContext);if(currentExecutionContext)

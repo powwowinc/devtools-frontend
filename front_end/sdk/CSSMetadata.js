@@ -631,7 +631,16 @@ SDK.CSSMetadata._propertyDataMap = {
       'diagonal-fractions',
       'stacked-fractions',
       'ordinal',
-      'slashed-zero'
+      'slashed-zero',
+      'jis78',
+      'jis83',
+      'jis90',
+      'jis04',
+      'simplified',
+      'traditional',
+      'full-width',
+      'proportional-width',
+      'ruby'
     ]
   },
   'vertical-align': {
@@ -791,6 +800,10 @@ SDK.CSSMetadata._propertyDataMap = {
   'font-size-adjust': {values: ['none']},
   'font-variant-caps':
       {values: ['small-caps', 'all-small-caps', 'petite-caps', 'all-petite-caps', 'unicase', 'titling-caps', 'normal']},
+  'font-variant-east-asian': {
+    values:
+        ['jis78', 'jis83', 'jis90', 'jis04', 'simplified', 'traditional', 'full-width', 'proportional-width', 'ruby']
+  },
   'font-variant-ligatures': {
     values: [
       'none', 'common-ligatures', 'no-common-ligatures', 'discretionary-ligatures', 'no-discretionary-ligatures',
@@ -971,6 +984,18 @@ SDK.CSSMetadata._propertyDataMap = {
   'ry': {values: ['auto']},
   'scale': {values: ['none']},
   'scroll-behavior': {values: ['auto', 'smooth']},
+  'scroll-customization': {
+    values: [
+      'none',
+      'auto',
+      'pan-x',
+      'pan-y',
+      'pan-left',
+      'pan-right',
+      'pan-up',
+      'pan-down',
+    ]
+  },
   'shape-outside': {values: ['none', 'border-box', 'content-box', 'padding-box', 'margin-box']},
   'shape-rendering': {values: ['auto', 'optimizespeed', 'geometricprecision', 'crispedges']},
   'stroke': {values: ['none']},

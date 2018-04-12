@@ -197,6 +197,7 @@ ConsoleTestRunner.addConsoleViewSniffer = function(override, opt_sticky) {
  * @param {boolean=} dontForceMainContext
  */
 ConsoleTestRunner.evaluateInConsoleAndDump = function(code, callback, dontForceMainContext) {
+  callback = TestRunner.safeWrap(callback);
   /**
    * @param {string} text
    */
@@ -295,12 +296,16 @@ ConsoleTestRunner.dumpConsoleMessagesWithClasses = function(sortMessages) {
 
 ConsoleTestRunner.dumpConsoleClassesBrief = function() {
   var messageViews = Console.ConsoleView.instance()._visibleViewMessages;
-  for (var i = 0; i < messageViews.length; ++i)
-    TestRunner.addResult(messageViews[i].toMessageElement().className);
+  for (var i = 0; i < messageViews.length; ++i) {
+    var repeatText = messageViews[i].repeatCount() > 1 ? (' x' + messageViews[i].repeatCount()) : '';
+    TestRunner.addResult(messageViews[i].toMessageElement().className + repeatText);
+  }
 };
 
-ConsoleTestRunner.dumpConsoleCounters = function() {
+ConsoleTestRunner.dumpConsoleCounters = async function() {
   var counter = ConsoleCounters.WarningErrorCounter._instanceForTest;
+  if (counter._updatingForTest)
+    await TestRunner.addSnifferPromise(counter, '_updatedForTest');
   for (var index = 0; index < counter._titles.length; ++index)
     TestRunner.addResult(counter._titles[index]);
   ConsoleTestRunner.dumpConsoleClassesBrief();
@@ -487,6 +492,14 @@ ConsoleTestRunner.waitForConsoleMessages = function(expectedCount, callback) {
 };
 
 /**
+ * @param {number} expectedCount
+ * @return {!Promise}
+ */
+ConsoleTestRunner.waitForConsoleMessagesPromise = function(expectedCount) {
+  return new Promise(fulfill => ConsoleTestRunner.waitForConsoleMessages(expectedCount, fulfill));
+};
+
+/**
  * @param {number} fromMessage
  * @param {number} fromTextOffset
  * @param {number} toMessage
@@ -544,4 +557,51 @@ ConsoleTestRunner.wrapListener = function(func) {
     func.apply(this, arguments);
   }
   return wrapper;
+};
+
+ConsoleTestRunner.dumpStackTraces = function() {
+  var viewMessages = Console.ConsoleView.instance()._visibleViewMessages;
+  for (var i = 0; i < viewMessages.length; ++i) {
+    var m = viewMessages[i].consoleMessage();
+    TestRunner.addResult(
+        'Message[' + i + ']: ' + Bindings.displayNameForURL(m.url || '') + ':' + m.line + ' ' + m.messageText);
+    var trace = m.stackTrace ? m.stackTrace.callFrames : null;
+    if (!trace) {
+      TestRunner.addResult('FAIL: no stack trace attached to message #' + i);
+    } else {
+      TestRunner.addResult('Stack Trace:\n');
+      TestRunner.addResult('  url: ' + trace[0].url);
+      TestRunner.addResult('  function: ' + trace[0].functionName);
+      TestRunner.addResult('  line: ' + trace[0].lineNumber);
+    }
+  }
+};
+
+/**
+ * Returns actual visible indices. Messages in the margin are treated as NOT visible.
+ * @return {!{first: number, last: number, count: number}}
+ */
+ConsoleTestRunner.visibleIndices = function() {
+  var consoleView = Console.ConsoleView.instance();
+  var viewport = consoleView._viewport;
+  var viewportRect = viewport.element.getBoundingClientRect();
+  var viewportPadding = parseFloat(window.getComputedStyle(viewport.element).paddingTop);
+  var first = -1;
+  var last = -1;
+  var count = 0;
+  for (var i = 0; i < consoleView._visibleViewMessages.length; i++) {
+    // Created message elements may have a bounding rect, but not be connected to DOM.
+    var item = consoleView._visibleViewMessages[i];
+    if (!item._element || !item._element.isConnected)
+      continue;
+    var itemRect = item._element.getBoundingClientRect();
+    var isVisible = (itemRect.bottom > viewportRect.top + viewportPadding + 1) &&
+        (itemRect.top <= viewportRect.bottom - viewportPadding - 1);
+    if (isVisible) {
+      first = first === -1 ? i : first;
+      last = i;
+      count++;
+    }
+  }
+  return {first, last, count};
 };

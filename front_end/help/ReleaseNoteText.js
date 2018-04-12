@@ -12,6 +12,140 @@ var commandMenuShortcut = Host.isMac() ? 'Command + Shift + P' : 'Control + Shif
 /** @type {!Array<!Help.ReleaseNote>} */
 Help.releaseNoteText = [
   {
+    version: 8,
+    header: 'Highlights from the Chrome 65 update',
+    highlights: [
+      {
+        title: 'Local overrides',
+        subtitle: 'Override network requests and serve local resources instead.',
+        link: 'https://developers.google.com/web/updates/2018/01/devtools#overrides',
+      },
+      {
+        title: 'Changes tab',
+        subtitle: 'Track changes that you make locally in DevTools via the Changes tab.',
+        link: 'https://developers.google.com/web/updates/2018/01/devtools#changes',
+      },
+      {
+        title: 'New accessibility tools',
+        subtitle: 'Inspect the accessibility properties and contrast ratio of elements.',
+        link: 'https://developers.google.com/web/updates/2018/01/devtools#a11y',
+      },
+      {
+        title: 'New audits',
+        subtitle: 'New performance audits, a whole new category of SEO audits, and more.',
+        link: 'https://developers.google.com/web/updates/2018/01/devtools#audits',
+      },
+      {
+        title: 'Code stepping updates',
+        subtitle: 'Reliably step into web worker and asynchronous code.',
+        link: 'https://developers.google.com/web/updates/2018/01/devtools#stepping',
+      },
+      {
+        title: 'Multiple recordings in the Performance panel',
+        subtitle: 'Temporarily save up to 5 recordings.',
+        link: 'https://developers.google.com/web/updates/2018/01/devtools#recordings',
+      },
+    ],
+    link: 'https://developers.google.com/web/updates/2018/01/devtools',
+  },
+  {
+    version: 7,
+    header: 'Highlights from the Chrome 64 update',
+    highlights: [
+      {
+        title: 'Performance monitor',
+        subtitle: 'Get a real-time view of various performance metrics.',
+        link: 'https://developers.google.com/web/updates/2017/11/devtools-release-notes#perf-monitor',
+      },
+      {
+        title: 'Console sidebar',
+        subtitle: 'Reduce console noise and focus on the messages that are important to you.',
+        link: 'https://developers.google.com/web/updates/2017/11/devtools-release-notes#console-sidebar',
+      },
+      {
+        title: 'Group similar console messages',
+        subtitle: 'The Console now groups similar messages by default.',
+        link: 'https://developers.google.com/web/updates/2017/11/devtools-release-notes#group-similar',
+      },
+    ],
+    link: 'https://developers.google.com/web/updates/2017/11/devtools-release-notes',
+  },
+  {
+    version: 6,
+    header: 'Highlights from the Chrome 63 update',
+    highlights: [
+      {
+        title: 'Multi-client remote debugging',
+        subtitle: 'Use DevTools while debugging your app from an IDE or testing framework.',
+        link: 'https://developers.google.com/web/updates/2017/10/devtools-release-notes#multi-client',
+      },
+      {
+        title: 'Workspaces 2.0',
+        subtitle: 'Save changes made in DevTools to disk, now with more helpful UI and better auto-mapping.',
+        link: 'https://developers.google.com/web/updates/2017/10/devtools-release-notes#workspaces',
+      },
+      {
+        title: 'Four new audits',
+        subtitle:
+            'Including "Appropriate aspect ratios for images", "Avoid JS libraries with known vulnerabilities", and more.',
+        link: 'https://developers.google.com/web/updates/2017/10/devtools-release-notes#audits',
+      },
+      {
+        title: 'Custom push notifications',
+        subtitle: 'Simulate push notifications with custom data.',
+        link: 'https://developers.google.com/web/updates/2017/10/devtools-release-notes#push',
+      },
+      {
+        title: 'Custom background sync events',
+        subtitle: 'Trigger background sync events with custom tags.',
+        link: 'https://developers.google.com/web/updates/2017/10/devtools-release-notes#sync',
+      },
+    ],
+    link: 'https://developers.google.com/web/updates/2017/10/devtools-release-notes',
+  },
+  {
+    version: 5,
+    header: 'Highlights from the Chrome 62 update',
+    highlights: [
+      {
+        title: 'Top-level await operators in the Console',
+        subtitle: 'Use await to conveniently experiment with asynchronous functions in the Console.',
+        link: 'https://developers.google.com/web/updates/2017/08/devtools-release-notes#await',
+      },
+      {
+        title: 'New screenshot workflows',
+        subtitle: 'Take screenshots of a portion of the viewport, or of specific HTML nodes.',
+        link: 'https://developers.google.com/web/updates/2017/08/devtools-release-notes#screenshots',
+      },
+      {
+        title: 'CSS Grid highlighting',
+        subtitle: 'Hover over an element to see the CSS Grid that\'s affecting it.',
+        link: 'https://developers.google.com/web/updates/2017/08/devtools-release-notes#css-grid-highlighting',
+      },
+      {
+        title: 'A new Console API for querying objects',
+        subtitle: 'Call queryObjects(Constructor) to get an array of objects instantiated with that constructor.',
+        link: 'https://developers.google.com/web/updates/2017/08/devtools-release-notes#query-objects',
+      },
+      {
+        title: 'New Console filters',
+        subtitle: 'Filter out logging noise with the new negative and URL filters.',
+        link: 'https://developers.google.com/web/updates/2017/08/devtools-release-notes#console-filters',
+      },
+      {
+        title: 'HAR imports in the Network panel',
+        subtitle: 'Drag-and-drop a HAR file to analyze a previous network recording.',
+        link: 'https://developers.google.com/web/updates/2017/08/devtools-release-notes#har-imports',
+      },
+      {
+        title: 'Previewable cache resources in the Application panel',
+        subtitle: 'Click a row in a Cache Storage table to see a preview of that resource.',
+        link: 'https://developers.google.com/web/updates/2017/08/devtools-release-notes#cache-preview',
+      }
+    ],
+    link: 'https://developers.google.com/web/updates/2017/08/devtools-release-notes',
+  },
+  {
     version: 4,
     header: 'Highlights from the Chrome 61 update',
     highlights: [

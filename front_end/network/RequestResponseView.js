@@ -47,11 +47,17 @@ Network.RequestResponseView = class extends UI.VBox {
    * @return {boolean}
    */
   static _hasTextContent(request, contentData) {
-    if (request.resourceType().isTextType())
+    var mimeType = request.mimeType;
+    var resourceType = Common.ResourceType.fromMimeType(mimeType);
+    if (resourceType === Common.resourceTypes.Other)
+      resourceType = request.contentType();
+    if (resourceType === Common.resourceTypes.Image)
+      return mimeType.startsWith('image/svg');
+    if (resourceType.isTextType())
       return true;
     if (contentData.error)
       return false;
-    if (request.resourceType() === Common.resourceTypes.Other)
+    if (resourceType === Common.resourceTypes.Other)
       return !!contentData.content && !contentData.encoded;
     return false;
   }
@@ -143,6 +149,14 @@ Network.DecodingContentProvider = class {
    */
   contentType() {
     return this._request.resourceType();
+  }
+
+  /**
+   * @override
+   * @return {!Promise<boolean>}
+   */
+  contentEncoded() {
+    return Promise.resolve(false);
   }
 
   /**

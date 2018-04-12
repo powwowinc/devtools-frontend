@@ -99,7 +99,7 @@ Workspace.Project.prototype = {
 
   /**
    * @param {!Workspace.UISourceCode} uiSourceCode
-   * @param {function(?string)} callback
+   * @param {function(?string,boolean)} callback
    */
   requestFileContent(uiSourceCode, callback) {},
 
@@ -111,9 +111,10 @@ Workspace.Project.prototype = {
   /**
    * @param {!Workspace.UISourceCode} uiSourceCode
    * @param {string} newContent
+   * @param {boolean} isBase64
    * @param {function(?string)} callback
    */
-  setFileContent(uiSourceCode, newContent, callback) {},
+  setFileContent(uiSourceCode, newContent, isBase64, callback) {},
 
   /**
    * @param {!Workspace.UISourceCode} uiSourceCode
@@ -146,11 +147,23 @@ Workspace.Project.prototype = {
 
   /**
    * @param {string} path
+   * @return {boolean}
+   */
+  canExcludeFolder(path) {},
+
+  /**
+   * @param {string} path
    * @param {?string} name
    * @param {string} content
-   * @param {function(?Workspace.UISourceCode)} callback
+   * @param {boolean=} isBase64
+   * @return {!Promise<?Workspace.UISourceCode>}
    */
-  createFile(path, name, content, callback) {},
+  createFile(path, name, content, isBase64) {},
+
+  /**
+   * @return {boolean}
+   */
+  canCreateFile() {},
 
   /**
    * @param {!Workspace.UISourceCode} uiSourceCode

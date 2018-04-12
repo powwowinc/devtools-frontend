@@ -360,8 +360,20 @@ UI.Widget = class extends Common.Object {
     if (!this._parentWidget && !this._isRoot)
       return;
 
-    if (this._visible)
-      this._hideWidget(overrideHideOnDetach || !this.shouldHideOnDetach());
+    // hideOnDetach means that we should never remove element from dom - content
+    // has iframes and detaching it will hurt.
+    //
+    // overrideHideOnDetach will override hideOnDetach and the client takes
+    // responsibility for the consequences.
+    var removeFromDOM = overrideHideOnDetach || !this.shouldHideOnDetach();
+    if (this._visible) {
+      this._hideWidget(removeFromDOM);
+    } else if (removeFromDOM && this.element.parentElement) {
+      var parentElement = this.element.parentElement;
+      // Force kick out from DOM.
+      UI.Widget._decrementWidgetCounter(parentElement, this.element);
+      UI.Widget._originalRemoveChild.call(parentElement, this.element);
+    }
 
     // Update widget hierarchy.
     if (this._parentWidget) {
@@ -480,8 +492,16 @@ UI.Widget = class extends Common.Object {
       for (var child of this._children) {
         if (child._visible) {
           child.focus();
-          break;
+          return;
         }
+      }
+      var child = this.contentElement.traverseNextNode(this.contentElement);
+      while (child) {
+        if (child instanceof UI.XWidget) {
+          child.focus();
+          return;
+        }
+        child = child.traverseNextNode(this.contentElement);
       }
     }
   }
@@ -687,7 +707,7 @@ UI.WidgetFocusRestorer = class {
 /**
  * @override
  * @param {?Node} child
- * @return {?Node}
+ * @return {!Node}
  * @suppress {duplicate}
  */
 Element.prototype.appendChild = function(child) {

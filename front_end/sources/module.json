@@ -15,12 +15,12 @@
                 "Workspace.UILocation",
                 "SDK.RemoteObject",
                 "SDK.NetworkRequest",
-                "SourceFrame.UISourceCodeFrame"
+                "Sources.UISourceCodeFrame"
             ],
             "className": "Sources.SourcesPanel"
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "category": "Debugger",
             "actionId": "debugger.toggle-pause",
             "iconClass": "largeicon-pause",
@@ -52,7 +52,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "debugger.step-over",
             "className": "Sources.SourcesPanel.DebuggingActionDelegate",
             "title": "Step over next function call",
@@ -72,11 +72,11 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "debugger.step-into",
             "className": "Sources.SourcesPanel.DebuggingActionDelegate",
             "title": "Step into next function call",
-            "iconClass": "largeicon-step-in",
+            "iconClass": "largeicon-step-into",
             "contextTypes": [
                 "Sources.SourcesPanel"
             ],
@@ -92,7 +92,22 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
+            "actionId": "debugger.step",
+            "className": "Sources.SourcesPanel.DebuggingActionDelegate",
+            "title": "Step",
+            "iconClass": "largeicon-step",
+            "contextTypes": [
+                "Sources.SourcesPanel"
+            ],
+            "bindings": [
+                {
+                    "shortcut": "F9"
+                }
+            ]
+        },
+        {
+            "type": "action",
             "actionId": "debugger.step-out",
             "className": "Sources.SourcesPanel.DebuggingActionDelegate",
             "title": "Step out of current function",
@@ -112,7 +127,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "debugger.run-snippet",
             "className": "Sources.SourcesPanel.DebuggingActionDelegate",
             "title": "Run snippet",
@@ -132,7 +147,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "sources.search.toggle",
             "title": "Search all files",
             "className": "Sources.AdvancedSearchView.ActionDelegate",
@@ -149,7 +164,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "category": "Debugger",
             "actionId": "debugger.toggle-breakpoints-active",
             "iconClass": "largeicon-deactivate-breakpoints",
@@ -180,12 +195,12 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "sources.add-to-watch",
             "className": "Sources.WatchExpressionsSidebarPane",
             "title": "Add selected text to watches",
             "contextTypes": [
-                "SourceFrame.UISourceCodeFrame"
+                "Sources.UISourceCodeFrame"
             ],
             "bindings": [
                 {
@@ -201,12 +216,12 @@
             "className": "Sources.WatchExpressionsSidebarPane"
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "debugger.evaluate-selection",
             "className": "Sources.SourcesPanel.DebuggingActionDelegate",
             "title": "Evaluate in console",
             "contextTypes": [
-                "SourceFrame.UISourceCodeFrame"
+                "Sources.UISourceCodeFrame"
             ],
             "bindings": [
                 {
@@ -234,12 +249,12 @@
         },
         {
             "type": "context-menu-item",
-            "location": "mainMenu/navigate",
+            "location": "mainMenu/default",
             "actionId": "sources.search.toggle"
         },
         {
             "type": "context-menu-item",
-            "location": "navigatorMenu/navigate",
+            "location": "navigatorMenu/default",
             "actionId": "quickOpen.show"
         },
         {
@@ -281,22 +296,11 @@
         {
             "type": "view",
             "location": "navigator-view",
-            "id": "navigator-sources",
-            "title": "Sources",
-            "order": 1,
-            "persistence": "permanent",
-            "className": "Sources.SourcesNavigatorView",
-            "experiment": "!persistence2"
-        },
-        {
-            "type": "view",
-            "location": "navigator-view",
             "id": "navigator-network",
             "title": "Network",
             "order": 2,
             "persistence": "permanent",
-            "className": "Sources.NetworkNavigatorView",
-            "experiment": "persistence2"
+            "className": "Sources.NetworkNavigatorView"
         },
         {
             "type": "view",
@@ -305,15 +309,23 @@
             "title": "Filesystem",
             "order": 3,
             "persistence": "permanent",
-            "className": "Sources.FilesNavigatorView",
-            "experiment": "persistence2"
+            "className": "Sources.FilesNavigatorView"
+        },
+        {
+            "type": "view",
+            "location": "navigator-view",
+            "id": "navigator-overrides",
+            "title": "Overrides",
+            "order": 4,
+            "persistence": "permanent",
+            "className": "Sources.OverridesNavigatorView"
         },
         {
             "type": "view",
             "location": "navigator-view",
             "id": "navigator-contentScripts",
             "title": "Content scripts",
-            "order": 4,
+            "order": 5,
             "persistence": "permanent",
             "className": "Sources.ContentScriptsNavigatorView"
         },
@@ -322,27 +334,24 @@
             "location": "navigator-view",
             "id": "navigator-snippets",
             "title": "Snippets",
-            "order": 5,
+            "order": 6,
             "persistence": "permanent",
             "className": "Sources.SnippetsNavigatorView"
         },
         {
             "type": "@Sources.NavigatorView",
-            "viewId": "navigator-sources",
-            "className": "Sources.SourcesNavigatorView",
-            "experiment": "!persistence2"
-        },
-        {
-            "type": "@Sources.NavigatorView",
             "viewId": "navigator-network",
-            "className": "Sources.NetworkNavigatorView",
-            "experiment": "persistence2"
+            "className": "Sources.NetworkNavigatorView"
         },
         {
             "type": "@Sources.NavigatorView",
             "viewId": "navigator-files",
-            "className": "Sources.FilesNavigatorView",
-            "experiment": "persistence2"
+            "className": "Sources.FilesNavigatorView"
+        },
+        {
+            "type": "@Sources.NavigatorView",
+            "viewId": "navigator-overrides",
+            "className": "Sources.OverridesNavigatorView"
         },
         {
             "type": "@Sources.NavigatorView",
@@ -355,7 +364,7 @@
             "className": "Sources.SnippetsNavigatorView"
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "sources.switch-file",
             "className": "Sources.SourcesView.SwitchFileActionDelegate",
             "contextTypes": [
@@ -364,6 +373,20 @@
             "bindings": [
                 {
                     "shortcut": "Alt+O"
+                }
+            ]
+        },
+        {
+            "type": "action",
+            "actionId": "sources.rename",
+            "bindings": [
+                {
+                    "platform": "windows,linux",
+                    "shortcut": "F2"
+                },
+                {
+                    "platform": "mac",
+                    "shortcut": "Enter"
                 }
             ]
         },
@@ -379,7 +402,17 @@
             "title": "Search in anonymous and content scripts",
             "settingName": "searchInAnonymousAndContentScripts",
             "settingType": "boolean",
-            "defaultValue": false
+            "defaultValue": false,
+            "options": [
+                {
+                    "value": true,
+                    "title": "Search in anonymous and content scripts"
+                },
+                {
+                    "value": false,
+                    "title": "Do not search in anonymous and content scripts"
+                }
+            ]
         },
         {
             "type": "setting",
@@ -387,7 +420,17 @@
             "title": "Automatically reveal files in navigator",
             "settingName": "autoRevealInNavigator",
             "settingType": "boolean",
-            "defaultValue": false
+            "defaultValue": false,
+            "options": [
+                {
+                    "value": true,
+                    "title": "Automatically reveal files in navigator"
+                },
+                {
+                    "value": false,
+                    "title": "Do not automatically reveal files in navigator"
+                }
+            ]
         },
         {
             "type": "setting",
@@ -395,7 +438,17 @@
             "title": "Enable JavaScript source maps",
             "settingName": "jsSourceMapsEnabled",
             "settingType": "boolean",
-            "defaultValue": true
+            "defaultValue": true,
+            "options": [
+                {
+                    "value": true,
+                    "title": "Enable JavaScript source maps"
+                },
+                {
+                    "value": false,
+                    "title": "Disable JavaScript source maps"
+                }
+            ]
         },
         {
             "type": "setting",
@@ -403,7 +456,17 @@
             "title": "Detect indentation",
             "settingName": "textEditorAutoDetectIndent",
             "settingType": "boolean",
-            "defaultValue": true
+            "defaultValue": true,
+            "options": [
+                {
+                    "value": true,
+                    "title": "Detect indentation"
+                },
+                {
+                    "value": false,
+                    "title": "Do not detect indentation"
+                }
+            ]
         },
         {
             "type": "setting",
@@ -411,7 +474,17 @@
             "title": "Autocompletion",
             "settingName": "textEditorAutocompletion",
             "settingType": "boolean",
-            "defaultValue": true
+            "defaultValue": true,
+            "options": [
+                {
+                    "value": true,
+                    "title": "Enable autocompletion"
+                },
+                {
+                    "value": false,
+                    "title": "Disable autocompletion"
+                }
+            ]
         },
         {
             "type": "setting",
@@ -419,7 +492,17 @@
             "title": "Bracket matching",
             "settingName": "textEditorBracketMatching",
             "settingType": "boolean",
-            "defaultValue": true
+            "defaultValue": true,
+            "options": [
+                {
+                    "value": true,
+                    "title": "Enable bracket matching"
+                },
+                {
+                    "value": false,
+                    "title": "Disable bracket matching"
+                }
+            ]
         },
         {
             "type": "setting",
@@ -452,7 +535,17 @@
             "title": "Display variable values inline while debugging",
             "settingName": "inlineVariableValues",
             "settingType": "boolean",
-            "defaultValue": true
+            "defaultValue": true,
+            "options": [
+                {
+                    "value": true,
+                    "title": "Display variable values inline while debugging"
+                },
+                {
+                    "value": false,
+                    "title": "Do not display variable values inline while debugging"
+                }
+            ]
         },
         {
             "type": "setting",
@@ -460,7 +553,17 @@
             "title": "Enable CSS source maps",
             "settingName": "cssSourceMapsEnabled",
             "settingType": "boolean",
-            "defaultValue": true
+            "defaultValue": true,
+            "options": [
+                {
+                    "value": true,
+                    "title": "Enable CSS source maps"
+                },
+                {
+                    "value": false,
+                    "title": "Disable CSS source maps"
+                }
+            ]
         },
         {
             "type": "view",
@@ -473,14 +576,6 @@
         {
             "type": "view",
             "location": "drawer-view",
-            "id": "sources.history",
-            "title": "History",
-            "persistence": "transient",
-            "className": "Sources.RevisionHistoryView"
-        },
-        {
-            "type": "view",
-            "location": "drawer-view",
             "id": "sources.quick",
             "title": "Quick source",
             "persistence": "closeable",
@@ -488,24 +583,24 @@
             "className": "Sources.SourcesPanel.WrapperView"
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "category": "Sources",
             "actionId": "sources.close-all",
             "className": "Sources.SourcesView.CloseAllActionDelegate",
             "title": "Close All"
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "category": "Sources",
             "actionId": "sources.create-snippet",
-            "className": "Sources.SourcesNavigatorView.CreatingActionDelegate",
+            "className": "Sources.SnippetsNavigatorView.CreatingActionDelegate",
             "title": "Create new snippet"
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "category": "Sources",
             "actionId": "sources.add-folder-to-workspace",
-            "className": "Sources.SourcesNavigatorView.CreatingActionDelegate",
+            "className": "Sources.SnippetsNavigatorView.CreatingActionDelegate",
             "title": "Add folder to workspace"
         },
         {
@@ -523,7 +618,7 @@
             "type": "view",
             "location": "sources-sidebar",
             "id": "sources.xhrBreakpoints",
-            "title": "XHR Breakpoints",
+            "title": "XHR/fetch Breakpoints",
             "order": 5,
             "hasToolbar": true,
             "persistence": "permanent",
@@ -631,10 +726,10 @@
         "GoToLineQuickOpen.js",
         "SourceMapNamesResolver.js",
         "JavaScriptBreakpointsSidebarPane.js",
+        "UISourceCodeFrame.js",
         "JavaScriptSourceFrame.js",
-        "CSSSourceFrame.js",
+        "CSSPlugin.js",
         "NavigatorView.js",
-        "RevisionHistoryView.js",
         "ScopeChainSidebarPane.js",
         "SourcesNavigator.js",
         "OutlineQuickOpen.js",
@@ -650,9 +745,9 @@
         "FileBasedSearchResultsPane.js",
         "SourcesSearchScope.js",
         "SourcesPanel.js",
-        "WorkspaceMappingTip.js",
         "XHRBreakpointsSidebarPane.js",
-        "JavaScriptCompiler.js",
+        "JavaScriptCompilerPlugin.js",
+        "SnippetsPlugin.js",
         "ObjectEventListenersSidebarPane.js"
     ],
     "resources": [

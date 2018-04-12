@@ -185,10 +185,12 @@ PerfUI.FlameChart = class extends UI.VBox {
 
   _resetCanvas() {
     var ratio = window.devicePixelRatio;
-    this._canvas.width = this._offsetWidth * ratio;
-    this._canvas.height = this._offsetHeight * ratio;
-    this._canvas.style.width = this._offsetWidth + 'px';
-    this._canvas.style.height = this._offsetHeight + 'px';
+    var width = Math.round(this._offsetWidth * ratio);
+    var height = Math.round(this._offsetHeight * ratio);
+    this._canvas.width = width;
+    this._canvas.height = height;
+    this._canvas.style.width = `${width / ratio}px`;
+    this._canvas.style.height = `${height / ratio}px`;
   }
 
   /**
@@ -765,11 +767,13 @@ PerfUI.FlameChart = class extends UI.VBox {
     this._drawGroupHeaders(width, height);
     this._drawFlowEvents(context, width, height);
     this._drawMarkers();
-    var headerHeight = this._rulerEnabled ? PerfUI.FlameChart.HeaderHeight : 0;
     var dividersData = PerfUI.TimelineGrid.calculateDividerOffsets(this._calculator);
     PerfUI.TimelineGrid.drawCanvasGrid(context, dividersData);
-    PerfUI.TimelineGrid.drawCanvasHeaders(
-        context, dividersData, time => this._calculator.formatValue(time, dividersData.precision), 3, headerHeight);
+    if (this._rulerEnabled) {
+      PerfUI.TimelineGrid.drawCanvasHeaders(
+          context, dividersData, time => this._calculator.formatValue(time, dividersData.precision), 3,
+          PerfUI.FlameChart.HeaderHeight);
+    }
 
     this._updateElementPosition(this._highlightElement, this._highlightedEntryIndex);
     this._updateElementPosition(this._selectedElement, this._selectedEntryIndex);

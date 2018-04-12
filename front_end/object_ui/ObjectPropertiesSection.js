@@ -129,18 +129,23 @@ ObjectUI.ObjectPropertiesSection = class extends UI.TreeOutlineInShadow {
    */
   static valueElementForFunctionDescription(description, includePreview, defaultName) {
     var valueElement = createElementWithClass('span', 'object-value-function');
-    var text = description ? description.replace(/^function [gs]et /, 'function ') : '';
+    var text = '';
+    if (description) {
+      text = description.replace(/^function [gs]et /, 'function ')
+                 .replace(/^function [gs]et\(/, 'function\(')
+                 .replace(/^[gs]et /, '');
+    }
     defaultName = defaultName || '';
 
     // This set of best-effort regular expressions captures common function descriptions.
     // Ideally, some parser would provide prefix, arguments, function body text separately.
-    var isAsync = text.startsWith('async function ');
-    var isGenerator = text.startsWith('function* ');
+    var asyncMatch = text.match(/^(async\s+function)/);
+    var isGenerator = text.startsWith('function*');
     var isGeneratorShorthand = text.startsWith('*');
-    var isBasic = !isGenerator && text.startsWith('function ');
+    var isBasic = !isGenerator && text.startsWith('function');
     var isClass = text.startsWith('class ') || text.startsWith('class{');
     var firstArrowIndex = text.indexOf('=>');
-    var isArrow = !isAsync && !isGenerator && !isBasic && !isClass && firstArrowIndex > 0;
+    var isArrow = !asyncMatch && !isGenerator && !isBasic && !isClass && firstArrowIndex > 0;
 
     var textAfterPrefix;
     if (isClass) {
@@ -150,8 +155,8 @@ ObjectUI.ObjectPropertiesSection = class extends UI.TreeOutlineInShadow {
       if (classNameMatch)
         className = classNameMatch[0].trim() || defaultName;
       addElements('class', textAfterPrefix, className);
-    } else if (isAsync) {
-      textAfterPrefix = text.substring('async function'.length);
+    } else if (asyncMatch) {
+      textAfterPrefix = text.substring(asyncMatch[1].length);
       addElements('async \u0192', textAfterPrefix, nameAndArguments(textAfterPrefix));
     } else if (isGenerator) {
       textAfterPrefix = text.substring('function*'.length);
@@ -256,7 +261,7 @@ ObjectUI.ObjectPropertiesSection = class extends UI.TreeOutlineInShadow {
     } else {
       valueElement = createElementWithClass('span', 'object-value-' + (subtype || type));
       valueElement.title = description || '';
-      if (Runtime.experiments.isEnabled('objectPreviews') && value.preview && showPreview) {
+      if (value.preview && showPreview) {
         var previewFormatter = new ObjectUI.RemoteObjectPreviewFormatter();
         previewFormatter.appendObjectPreview(valueElement, value.preview, false /* isEntry */);
       } else {
@@ -382,6 +387,13 @@ ObjectUI.ObjectPropertiesSection = class extends UI.TreeOutlineInShadow {
   _contextMenuEventFired(event) {
     var contextMenu = new UI.ContextMenu(event);
     contextMenu.appendApplicableItems(this._object);
+    if (this._object instanceof SDK.LocalJSONObject) {
+      contextMenu.viewSection().appendItem(
+          ls`Expand recursively`,
+          this._objectTreeElement.expandRecursively.bind(this._objectTreeElement, Number.MAX_VALUE));
+      contextMenu.viewSection().appendItem(
+          ls`Collapse children`, this._objectTreeElement.collapseChildren.bind(this._objectTreeElement));
+    }
     contextMenu.show();
   }
 
@@ -476,6 +488,7 @@ ObjectUI.ObjectPropertyTreeElement = class extends UI.TreeElement {
     /** @type {!Array.<!Object>} */
     this._highlightChanges = [];
     this._linkifier = linkifier;
+    this.listItemElement.addEventListener('contextmenu', this._contextMenuFired.bind(this), false);
   }
 
   /**
@@ -520,11 +533,10 @@ ObjectUI.ObjectPropertyTreeElement = class extends UI.TreeElement {
           treeElement, properties, internalProperties, skipProto, targetValue || value, linkifier, emptyPlaceholder);
     }
 
-    var generatePreview = Runtime.experiments.isEnabled('objectPreviews');
     if (flattenProtoChain)
-      value.getAllProperties(false, generatePreview, callback);
+      value.getAllProperties(false /* accessorPropertiesOnly */, true /* generatePreview */, callback);
     else
-      SDK.RemoteObject.loadFromObjectPerProto(value, generatePreview, callback);
+      SDK.RemoteObject.loadFromObjectPerProto(value, true /* generatePreview */, callback);
   }
 
   /**
@@ -755,7 +767,6 @@ ObjectUI.ObjectPropertyTreeElement = class extends UI.TreeElement {
       this.nameElement.classList.add('synthetic-property');
 
     this._updatePropertyPath();
-    this.nameElement.addEventListener('contextmenu', this._contextMenuFired.bind(this, this.property), false);
 
     var separatorElement = createElementWithClass('span', 'object-properties-section-separator');
     separatorElement.textContent = ': ';
@@ -764,7 +775,6 @@ ObjectUI.ObjectPropertyTreeElement = class extends UI.TreeElement {
       var showPreview = this.property.name !== '__proto__';
       this.valueElement = ObjectUI.ObjectPropertiesSection.createValueElementWithCustomSupport(
           this.property.value, this.property.wasThrown, showPreview, this.listItemElement, this._linkifier);
-      this.valueElement.addEventListener('contextmenu', this._contextMenuFired.bind(this, this.property), false);
     } else if (this.property.getter) {
       this.valueElement = ObjectUI.ObjectPropertyTreeElement.createRemoteObjectAccessorPropertySpan(
           this.property.parentObject, [this.property.name], this._onInvokeGetterClick.bind(this));
@@ -799,19 +809,22 @@ ObjectUI.ObjectPropertyTreeElement = class extends UI.TreeElement {
   }
 
   /**
-   * @param {!SDK.RemoteObjectProperty} property
    * @param {!Event} event
    */
-  _contextMenuFired(property, event) {
+  _contextMenuFired(event) {
     var contextMenu = new UI.ContextMenu(event);
-    if (property.symbol)
-      contextMenu.appendApplicableItems(property.symbol);
-    if (property.value)
-      contextMenu.appendApplicableItems(property.value);
-    var copyPathHandler = InspectorFrontendHost.copyText.bind(InspectorFrontendHost, this.nameElement.title);
-    contextMenu.beforeShow(() => {
-      contextMenu.appendItem(Common.UIString('Copy property path'), copyPathHandler);
-    });
+    if (this.property.symbol)
+      contextMenu.appendApplicableItems(this.property.symbol);
+    if (this.property.value)
+      contextMenu.appendApplicableItems(this.property.value);
+    if (this.nameElement && this.nameElement.title) {
+      var copyPathHandler = InspectorFrontendHost.copyText.bind(InspectorFrontendHost, this.nameElement.title);
+      contextMenu.clipboardSection().appendItem(ls`Copy property path`, copyPathHandler);
+    }
+    if (this.property.parentObject instanceof SDK.LocalJSONObject) {
+      contextMenu.viewSection().appendItem(ls`Expand recursively`, this.expandRecursively.bind(this, Number.MAX_VALUE));
+      contextMenu.viewSection().appendItem(ls`Collapse children`, this.collapseChildren.bind(this));
+    }
     contextMenu.show();
   }
 
@@ -819,7 +832,7 @@ ObjectUI.ObjectPropertyTreeElement = class extends UI.TreeElement {
     if (this._prompt || !this.treeOutline._editable || this._readOnly)
       return;
 
-    this._editableDiv = this.listItemElement.createChild('span');
+    this._editableDiv = this.listItemElement.createChild('span', 'editable-div');
 
     var text = this.property.value.description;
     if (this.property.value.type === 'string' && typeof text === 'string')
@@ -875,7 +888,7 @@ ObjectUI.ObjectPropertyTreeElement = class extends UI.TreeElement {
    */
   _promptKeyDown(originalContent, event) {
     if (isEnterKey(event)) {
-      event.consume(true);
+      event.consume();
       this._editingCommitted(originalContent);
       return;
     }
@@ -892,6 +905,21 @@ ObjectUI.ObjectPropertyTreeElement = class extends UI.TreeElement {
   async _applyExpression(expression) {
     var property = SDK.RemoteObject.toCallArgument(this.property.symbol || this.property.name);
     expression = SDK.RuntimeModel.wrapObjectLiteralExpressionIfNeeded(expression.trim());
+
+    if (this.property.synthetic) {
+      var invalidate = false;
+      if (expression)
+        invalidate = await this.property.setSyntheticValue(expression);
+      if (invalidate) {
+        var parent = this.parent;
+        parent.invalidateChildren();
+        parent.onpopulate();
+      } else {
+        this.update();
+      }
+      return;
+    }
+
     var errorPromise = expression ? this.property.parentObject.setPropertyValue(property, expression) :
                                     this.property.parentObject.deleteProperty(property);
     var error = await errorPromise;
@@ -1139,7 +1167,7 @@ ObjectUI.ArrayGroupingTreeElement = class extends UI.TreeElement {
       if (!arrayFragment || wasThrown)
         return;
       arrayFragment.getAllProperties(
-          false, Runtime.experiments.isEnabled('objectPreviews'), processProperties.bind(this));
+          false /* accessorPropertiesOnly */, true /* generatePreview */, processProperties.bind(this));
     }
 
     /** @this {ObjectUI.ArrayGroupingTreeElement} */
@@ -1197,7 +1225,7 @@ ObjectUI.ArrayGroupingTreeElement = class extends UI.TreeElement {
     function processObjectFragment(arrayFragment, wasThrown) {
       if (!arrayFragment || wasThrown)
         return;
-      arrayFragment.getOwnProperties(Runtime.experiments.isEnabled('objectPreviews'), processProperties.bind(this));
+      arrayFragment.getOwnProperties(true /* generatePreview */, processProperties.bind(this));
     }
 
     /**
@@ -1250,7 +1278,8 @@ ObjectUI.ArrayGroupingTreeElement._getOwnPropertyNamesThreshold = 500000;
 ObjectUI.ObjectPropertyPrompt = class extends UI.TextPrompt {
   constructor() {
     super();
-    this.initialize(ObjectUI.JavaScriptAutocomplete.completionsForTextInCurrentContext);
+    this.initialize(
+        ObjectUI.javaScriptAutocomplete.completionsForTextInCurrentContext.bind(ObjectUI.javaScriptAutocomplete));
   }
 };
 

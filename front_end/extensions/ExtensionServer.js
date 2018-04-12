@@ -49,8 +49,6 @@ Extensions.ExtensionServer = class extends Common.Object {
     this._status = new Extensions.ExtensionStatus();
     /** @type {!Array<!Extensions.ExtensionSidebarPane>} */
     this._sidebarPanes = [];
-    /** @type {!Array<!Extensions.ExtensionAuditCategory>} */
-    this._auditCategories = [];
     /** @type {!Array<!Extensions.ExtensionTraceProvider>} */
     this._traceProviders = [];
     /** @type {!Map<string, !Extensions.TracingSession>} */
@@ -58,8 +56,6 @@ Extensions.ExtensionServer = class extends Common.Object {
 
     var commands = Extensions.extensionAPI.Commands;
 
-    this._registerHandler(commands.AddAuditCategory, this._onAddAuditCategory.bind(this));
-    this._registerHandler(commands.AddAuditResult, this._onAddAuditResult.bind(this));
     this._registerHandler(commands.AddRequestHeaders, this._onAddRequestHeaders.bind(this));
     this._registerHandler(commands.AddTraceProvider, this._onAddTraceProvider.bind(this));
     this._registerHandler(commands.ApplyStyleSheet, this._onApplyStyleSheet.bind(this));
@@ -80,12 +76,10 @@ Extensions.ExtensionServer = class extends Common.Object {
     this._registerHandler(commands.SetSidebarContent, this._onSetSidebarContent.bind(this));
     this._registerHandler(commands.SetSidebarPage, this._onSetSidebarPage.bind(this));
     this._registerHandler(commands.ShowPanel, this._onShowPanel.bind(this));
-    this._registerHandler(commands.StopAuditCategoryRun, this._onStopAuditCategoryRun.bind(this));
     this._registerHandler(commands.Subscribe, this._onSubscribe.bind(this));
     this._registerHandler(commands.OpenResource, this._onOpenResource.bind(this));
     this._registerHandler(commands.Unsubscribe, this._onUnsubscribe.bind(this));
     this._registerHandler(commands.UpdateButton, this._onUpdateButton.bind(this));
-    this._registerHandler(commands.UpdateAuditProgress, this._onUpdateAuditProgress.bind(this));
     window.addEventListener('message', this._onWindowMessage.bind(this), false);  // Only for main window.
 
     InspectorFrontendHost.events.addEventListener(
@@ -148,22 +142,6 @@ Extensions.ExtensionServer = class extends Common.Object {
     this._requests = {};
     var url = event.data.inspectedURL();
     this._postNotification(Extensions.extensionAPI.Events.InspectedURLChanged, url);
-  }
-
-  /**
-   * @param {string} categoryId
-   * @param {!Extensions.ExtensionAuditCategoryResults} auditResults
-   */
-  startAuditRun(categoryId, auditResults) {
-    this._clientObjects[auditResults.id()] = auditResults;
-    this._postNotification('audit-started-' + categoryId, auditResults.id());
-  }
-
-  /**
-   * @param {!Extensions.ExtensionAuditCategoryResults} auditResults
-   */
-  stopAuditRun(auditResults) {
-    delete this._clientObjects[auditResults.id()];
   }
 
   /**
@@ -455,9 +433,9 @@ Extensions.ExtensionServer = class extends Common.Object {
         message.expression, true, true, message.evaluateOptions, port._extensionOrigin, callback.bind(this));
   }
 
-  _onGetHAR() {
+  async _onGetHAR() {
     var requests = NetworkLog.networkLog.requests();
-    var harLog = (new NetworkLog.HARLog(requests)).build();
+    var harLog = await NetworkLog.HARLog.build(requests);
     for (var i = 0; i < harLog.entries.length; ++i)
       harLog.entries[i]._requestId = this._requestId(requests[i]);
     return harLog;
@@ -499,19 +477,8 @@ Extensions.ExtensionServer = class extends Common.Object {
    * @param {!MessagePort} port
    */
   async _getResourceContent(contentProvider, message, port) {
-    var content = null;
-    var encoded = false;
-    if (contentProvider instanceof SDK.NetworkRequest) {
-      var contentData = await contentProvider.contentData();
-      content = contentData.content;
-      encoded = content && contentData.encoded;
-    } else {
-      content = await contentProvider.requestContent();
-    }
-
-    if (content && contentProvider instanceof SDK.Resource)
-      encoded = contentProvider.contentEncoded;
-
+    var content = await contentProvider.requestContent();
+    var encoded = await contentProvider.contentEncoded();
     this._dispatchCallback(message.requestId, port, {encoding: encoded ? 'base64' : '', content: content});
   }
 
@@ -566,14 +533,6 @@ Extensions.ExtensionServer = class extends Common.Object {
     return this._requests[id];
   }
 
-  _onAddAuditCategory(message, port) {
-    var category = new Extensions.ExtensionAuditCategory(
-        port._extensionOrigin, message.id, message.displayName, message.resultCount);
-    this._clientObjects[message.id] = category;
-    this._auditCategories.push(category);
-    this.dispatchEventToListeners(Extensions.ExtensionServer.Events.AuditCategoryAdded, category);
-  }
-
   /**
    * @param {!Object} message
    * @param {!MessagePort} port
@@ -591,39 +550,6 @@ Extensions.ExtensionServer = class extends Common.Object {
    */
   traceProviders() {
     return this._traceProviders;
-  }
-
-  /**
-   * @return {!Array.<!Extensions.ExtensionAuditCategory>}
-   */
-  auditCategories() {
-    return this._auditCategories;
-  }
-
-  _onAddAuditResult(message) {
-    var auditResult = /** {!Extensions.ExtensionAuditCategoryResults} */ (this._clientObjects[message.resultId]);
-    if (!auditResult)
-      return this._status.E_NOTFOUND(message.resultId);
-    try {
-      auditResult.addResult(message.displayName, message.description, message.severity, message.details);
-    } catch (e) {
-      return e;
-    }
-    return this._status.OK();
-  }
-
-  _onUpdateAuditProgress(message) {
-    var auditResult = /** {!Extensions.ExtensionAuditCategoryResults} */ (this._clientObjects[message.resultId]);
-    if (!auditResult)
-      return this._status.E_NOTFOUND(message.resultId);
-    auditResult.updateProgress(Math.min(Math.max(0, message.progress), 1));
-  }
-
-  _onStopAuditCategoryRun(message) {
-    var auditRun = /** {!Extensions.ExtensionAuditCategoryResults} */ (this._clientObjects[message.resultId]);
-    if (!auditRun)
-      return this._status.E_NOTFOUND(message.resultId);
-    auditRun.done();
   }
 
   _onForwardKeyboardEvent(message) {
@@ -712,15 +638,28 @@ Extensions.ExtensionServer = class extends Common.Object {
         Extensions.extensionAPI.Events.ResourceContentCommitted, this._makeResource(uiSourceCode), content);
   }
 
-  _notifyRequestFinished(event) {
+  async _notifyRequestFinished(event) {
     var request = /** @type {!SDK.NetworkRequest} */ (event.data);
-    this._postNotification(
-        Extensions.extensionAPI.Events.NetworkRequestFinished, this._requestId(request),
-        (new NetworkLog.HAREntry(request)).build());
+    var entry = await NetworkLog.HAREntry.build(request);
+    this._postNotification(Extensions.extensionAPI.Events.NetworkRequestFinished, this._requestId(request), entry);
   }
 
   _notifyElementsSelectionChanged() {
     this._postNotification(Extensions.extensionAPI.Events.PanelObjectSelected + 'elements');
+  }
+
+  /**
+   * @param {string} url
+   * @param {!TextUtils.TextRange} range
+   */
+  sourceSelectionChanged(url, range) {
+    this._postNotification(Extensions.extensionAPI.Events.PanelObjectSelected + 'sources', {
+      startLine: range.startLine,
+      startColumn: range.startColumn,
+      endLine: range.endLine,
+      endColumn: range.endColumn,
+      url: url,
+    });
   }
 
   /**
@@ -795,12 +734,12 @@ Extensions.ExtensionServer = class extends Common.Object {
       this._registerExtension(event.origin, event.ports[0]);
   }
 
-  _onmessage(event) {
+  async _onmessage(event) {
     var message = event.data;
     var result;
 
     if (message.command in this._handlers)
-      result = this._handlers[message.command](message, event.target);
+      result = await this._handlers[message.command](message, event.target);
     else
       result = this._status.E_NOTSUPPORTED(message.command);
 
@@ -990,7 +929,6 @@ Extensions.ExtensionServer = class extends Common.Object {
 /** @enum {symbol} */
 Extensions.ExtensionServer.Events = {
   SidebarPaneAdded: Symbol('SidebarPaneAdded'),
-  AuditCategoryAdded: Symbol('AuditCategoryAdded'),
   TraceProviderAdded: Symbol('TraceProviderAdded')
 };
 

@@ -11,9 +11,10 @@ Security.SecurityPanel = class extends UI.PanelWithSidebar {
 
     this._mainView = new Security.SecurityMainView(this);
 
+    var title = createElementWithClass('span', 'title');
+    title.textContent = Common.UIString('Overview');
     this._sidebarMainViewElement = new Security.SecurityPanelSidebarTreeElement(
-        Common.UIString('Overview'), this._setVisibleView.bind(this, this._mainView),
-        'security-main-view-sidebar-tree-item', 'lock-icon');
+        title, this._setVisibleView.bind(this, this._mainView), 'security-main-view-sidebar-tree-item', 'lock-icon');
     this._sidebarTree = new Security.SecurityPanelSidebarTree(this._sidebarMainViewElement, this.showOrigin.bind(this));
     this.panelSidebarElement().appendChild(this._sidebarTree.element);
 
@@ -38,38 +39,56 @@ Security.SecurityPanel = class extends UI.PanelWithSidebar {
 
   /**
    * @param {string} text
-   * @param {!Security.SecurityPanel} panel
+   * @param {string} origin
    * @return {!Element}
    */
-  static createCertificateViewerButton(text, panel) {
-    /**
-     * @param {!Event} e
-     */
-    function showCertificateViewer(e) {
+  static createCertificateViewerButtonForOrigin(text, origin) {
+    return UI.createTextButton(text, async e => {
       e.consume();
-      panel.showCertificateViewer();
-    }
-
-    return UI.createTextButton(text, showCertificateViewer, 'security-certificate-button');
+      var names = await SDK.multitargetNetworkManager.getCertificate(origin);
+      InspectorFrontendHost.showCertificateViewer(names);
+    }, 'origin-button');
   }
 
   /**
    * @param {string} text
-   * @param {string} origin
+   * @param {!Array<string>} names
    * @return {!Element}
    */
-  static createCertificateViewerButton2(text, origin) {
-    /**
-     * @param {!Event} e
-     */
-    function showCertificateViewer(e) {
+  static createCertificateViewerButtonForCert(text, names) {
+    return UI.createTextButton(text, e => {
       e.consume();
-      SDK.multitargetNetworkManager.getCertificate(origin).then(
-          names => InspectorFrontendHost.showCertificateViewer(names));
+      InspectorFrontendHost.showCertificateViewer(names);
+    }, 'security-certificate-button');
+  }
+
+  /**
+   * @param {string} url
+   * @param {string} securityState
+   * @return {!Element}
+   */
+  static createHighlightedUrl(url, securityState) {
+    var schemeSeparator = '://';
+    var index = url.indexOf(schemeSeparator);
+
+    // If the separator is not found, just display the text without highlighting.
+    if (index === -1) {
+      var text = createElement('span', '');
+      text.textContent = url;
+      return text;
     }
 
-    return UI.createTextButton(text, showCertificateViewer, 'security-certificate-button');
+    var highlightedUrl = createElement('span', 'url-text');
+
+    var scheme = url.substr(0, index);
+    var content = url.substr(index + schemeSeparator.length);
+    highlightedUrl.createChild('span', 'url-scheme-' + securityState).textContent = scheme;
+    highlightedUrl.createChild('span', 'url-scheme-separator').textContent = schemeSeparator;
+    highlightedUrl.createChild('span').textContent = content;
+
+    return highlightedUrl;
   }
+
 
   /**
    * @param {!Protocol.Security.SecurityState} securityState
@@ -200,7 +219,9 @@ Security.SecurityPanel = class extends UI.PanelWithSidebar {
           originState.originView.setSecurityState(securityState);
       }
     } else {
-      // TODO(lgarron): Store a (deduplicated) list of different security details we have seen. https://crbug.com/503170
+      // This stores the first security details we see for an origin, but we should
+      // eventually store a (deduplicated) list of all the different security
+      // details we have seen. https://crbug.com/503170
       var originState = {};
       originState.securityState = securityState;
 
@@ -256,10 +277,6 @@ Security.SecurityPanel = class extends UI.PanelWithSidebar {
    */
   filterRequestCount(filterKey) {
     return this._filterRequestCounts.get(filterKey) || 0;
-  }
-
-  showCertificateViewer() {
-    this._securityModel.showCertificateViewer();
   }
 
   /**
@@ -387,6 +404,7 @@ Security.SecurityPanelSidebarTree = class extends UI.TreeOutlineInShadow {
       var originGroupName = Security.SecurityPanelSidebarTree.OriginGroupName[key];
       var originGroup = new UI.TreeElement(originGroupName, true);
       originGroup.selectable = false;
+      originGroup.setCollapsible(false);
       originGroup.expand();
       originGroup.listItemElement.classList.add('security-sidebar-origins');
       this._originGroups.set(originGroupName, originGroup);
@@ -423,8 +441,8 @@ Security.SecurityPanelSidebarTree = class extends UI.TreeOutlineInShadow {
    */
   addOrigin(origin, securityState) {
     var originElement = new Security.SecurityPanelSidebarTreeElement(
-        origin, this._showOriginInPanel.bind(this, origin), 'security-sidebar-tree-item', 'security-property');
-    originElement.listItemElement.title = origin;
+        Security.SecurityPanel.createHighlightedUrl(origin, securityState), this._showOriginInPanel.bind(this, origin),
+        'security-sidebar-tree-item', 'security-property');
     this._elementsByOrigin.set(origin, originElement);
     this.updateOrigin(origin, securityState);
   }
@@ -505,19 +523,19 @@ Security.SecurityPanelSidebarTree.OriginGroupName = {
  */
 Security.SecurityPanelSidebarTreeElement = class extends UI.TreeElement {
   /**
-   * @param {string} text
+   * @param {!Element} textElement
    * @param {function()} selectCallback
    * @param {string} className
    * @param {string} cssPrefix
    */
-  constructor(text, selectCallback, className, cssPrefix) {
+  constructor(textElement, selectCallback, className, cssPrefix) {
     super('', false);
     this._selectCallback = selectCallback;
     this._cssPrefix = cssPrefix;
     this.listItemElement.classList.add(className);
     this._iconElement = this.listItemElement.createChild('div', 'icon');
     this._iconElement.classList.add(this._cssPrefix);
-    this.listItemElement.createChild('span', 'title').textContent = text;
+    this.listItemElement.appendChild(textElement);
     this.setSecurityState(Protocol.Security.SecurityState.Unknown);
   }
 
@@ -579,7 +597,8 @@ Security.SecurityMainView = class extends UI.VBox {
     this._summarySection = this.contentElement.createChild('div', 'security-summary');
 
     // Info explanations should appear after all others.
-    this._securityExplanationsMain = this.contentElement.createChild('div', 'security-explanation-list');
+    this._securityExplanationsMain =
+        this.contentElement.createChild('div', 'security-explanation-list security-explanations-main');
     this._securityExplanationsExtra =
         this.contentElement.createChild('div', 'security-explanation-list security-explanations-extra');
 
@@ -611,14 +630,23 @@ Security.SecurityMainView = class extends UI.VBox {
     explanationSection.createChild('div', 'security-property')
         .classList.add('security-property-' + explanation.securityState);
     var text = explanationSection.createChild('div', 'security-explanation-text');
-    text.createChild('div', 'security-explanation-title').textContent = explanation.summary;
-    text.createChild('div').textContent = explanation.description;
 
-    if (explanation.hasCertificate) {
-      text.appendChild(
-          Security.SecurityPanel.createCertificateViewerButton(Common.UIString('View certificate'), this._panel));
+    var explanationHeader = text.createChild('div', 'security-explanation-title');
+
+    if (explanation.title) {
+      explanationHeader.createChild('span').textContent = explanation.title + ' - ';
+      explanationHeader.createChild('span', 'security-explanation-title-' + explanation.securityState).textContent =
+          explanation.summary;
+    } else {
+      explanationHeader.textContent = explanation.summary;
     }
 
+    text.createChild('div').textContent = explanation.description;
+
+    if (explanation.certificate.length) {
+      text.appendChild(Security.SecurityPanel.createCertificateViewerButtonForCert(
+          Common.UIString('View certificate'), explanation.certificate));
+    }
     return text;
   }
 
@@ -682,10 +710,11 @@ Security.SecurityMainView = class extends UI.VBox {
 
     if (this._panel.filterRequestCount(Network.NetworkLogView.MixedContentFilterValues.Blocked) > 0) {
       var explanation = /** @type {!Protocol.Security.SecurityStateExplanation} */ ({
-        'securityState': Protocol.Security.SecurityState.Info,
-        'summary': Common.UIString('Blocked mixed content'),
-        'description': Common.UIString('Your page requested non-secure resources that were blocked.'),
-        'mixedContentType': Protocol.Security.MixedContentType.Blockable
+        securityState: Protocol.Security.SecurityState.Info,
+        summary: Common.UIString('Blocked mixed content'),
+        description: Common.UIString('Your page requested non-secure resources that were blocked.'),
+        mixedContentType: Protocol.Security.MixedContentType.Blockable,
+        certificate: []
       });
       this._addMixedContentExplanation(
           this._securityExplanationsMain, explanation, Network.NetworkLogView.MixedContentFilterValues.Blocked);
@@ -752,21 +781,23 @@ Security.SecurityOriginView = class extends UI.VBox {
     this.registerRequiredCSS('security/lockIcon.css');
 
     var titleSection = this.element.createChild('div', 'title-section');
+    titleSection.createChild('div', 'title-section-header').textContent = ls`Origin`;
+
     var originDisplay = titleSection.createChild('div', 'origin-display');
     this._originLockIcon = originDisplay.createChild('span', 'security-property');
     this._originLockIcon.classList.add('security-property-' + originState.securityState);
-    // TODO(lgarron): Highlight the origin scheme. https://crbug.com/523589
-    originDisplay.createChild('span', 'origin').textContent = origin;
-    var originNetworkLink = titleSection.createChild('div', 'link');
-    originNetworkLink.textContent = Common.UIString('View requests in Network Panel');
-    function showOriginRequestsInNetworkPanel() {
+
+    originDisplay.appendChild(Security.SecurityPanel.createHighlightedUrl(origin, originState.securityState));
+
+    var originNetworkButton = titleSection.createChild('div', 'view-network-button');
+    originNetworkButton.appendChild(UI.createTextButton('View requests in Network Panel', e => {
+      e.consume();
       var parsedURL = new Common.ParsedURL(origin);
       Network.NetworkPanel.revealAndFilter([
         {filterType: Network.NetworkLogView.FilterType.Domain, filterValue: parsedURL.host},
         {filterType: Network.NetworkLogView.FilterType.Scheme, filterValue: parsedURL.scheme}
       ]);
-    }
-    originNetworkLink.addEventListener('click', showOriginRequestsInNetworkPanel, false);
+    }, 'origin-button'));
 
     if (originState.securityDetails) {
       var connectionSection = this.element.createChild('div', 'origin-view-section');
@@ -780,7 +811,8 @@ Security.SecurityOriginView = class extends UI.VBox {
       if (originState.securityDetails.keyExchangeGroup)
         table.addRow(Common.UIString('Key exchange group'), originState.securityDetails.keyExchangeGroup);
       table.addRow(
-          Common.UIString('Cipher'), originState.securityDetails.cipher +
+          Common.UIString('Cipher'),
+          originState.securityDetails.cipher +
               (originState.securityDetails.mac ? ' with ' + originState.securityDetails.mac : ''));
 
       // Create the certificate section outside the callback, so that it appears in the right place.
@@ -805,9 +837,11 @@ Security.SecurityOriginView = class extends UI.VBox {
       table.addRow(Common.UIString('Valid from'), validFromString);
       table.addRow(Common.UIString('Valid until'), validUntilString);
       table.addRow(Common.UIString('Issuer'), originState.securityDetails.issuer);
+
       table.addRow(
-          '', Security.SecurityPanel.createCertificateViewerButton2(
-                  Common.UIString('Open full certificate details'), origin));
+          '',
+          Security.SecurityPanel.createCertificateViewerButtonForOrigin(
+              Common.UIString('Open full certificate details'), origin));
 
       if (!originState.securityDetails.signedCertificateTimestampList.length)
         return;
@@ -854,8 +888,7 @@ Security.SecurityOriginView = class extends UI.VBox {
       }
       toggleSctsDetailsLink.addEventListener('click', toggleSctDetailsDisplay, false);
 
-      var noteSection = this.element.createChild('div', 'origin-view-section');
-      // TODO(lgarron): Fix the issue and then remove this section. See comment in SecurityPanel._processRequest().
+      var noteSection = this.element.createChild('div', 'origin-view-section origin-view-notes');
       noteSection.createChild('div').textContent =
           Common.UIString('The security details above are from the first inspected response.');
     } else if (originState.securityState !== Protocol.Security.SecurityState.Unknown) {

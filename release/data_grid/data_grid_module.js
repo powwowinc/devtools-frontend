@@ -1,5 +1,6 @@
 DataGrid.DataGrid=class extends Common.Object{constructor(columnsArray,editCallback,deleteCallback,refreshCallback){super();this.element=createElementWithClass('div','data-grid');UI.appendStyle(this.element,'data_grid/dataGrid.css');this.element.tabIndex=0;this.element.addEventListener('keydown',this._keyDown.bind(this),false);this.element.addEventListener('contextmenu',this._contextMenu.bind(this),true);this._editCallback=editCallback;this._deleteCallback=deleteCallback;this._refreshCallback=refreshCallback;var headerContainer=this.element.createChild('div','header-container');this._headerTable=headerContainer.createChild('table','header');this._headerTableHeaders={};this._scrollContainer=this.element.createChild('div','data-container');this._dataTable=this._scrollContainer.createChild('table','data');if(editCallback)
 this._dataTable.addEventListener('dblclick',this._ondblclick.bind(this),false);this._dataTable.addEventListener('mousedown',this._mouseDownInDataTable.bind(this));this._dataTable.addEventListener('click',this._clickInDataTable.bind(this),true);this._inline=false;this._columnsArray=[];this._columns={};this._visibleColumnsArray=columnsArray;columnsArray.forEach(column=>this._innerAddColumn(column));this._cellClass=null;this._headerTableColumnGroup=this._headerTable.createChild('colgroup');this._headerTableBody=this._headerTable.createChild('tbody');this._headerRow=this._headerTableBody.createChild('tr');this._dataTableColumnGroup=this._dataTable.createChild('colgroup');this.dataTableBody=this._dataTable.createChild('tbody');this._topFillerRow=this.dataTableBody.createChild('tr','data-grid-filler-row revealed');this._bottomFillerRow=this.dataTableBody.createChild('tr','data-grid-filler-row revealed');this.setVerticalPadding(0,0);this._refreshHeader();this._editing=false;this.selectedNode=null;this.expandNodesWhenArrowing=false;this.setRootNode((new DataGrid.DataGridNode()));this.indentWidth=15;this._resizers=[];this._columnWidthsInitialized=false;this._cornerWidth=DataGrid.DataGrid.CornerWidth;this._resizeMethod=DataGrid.DataGrid.ResizeMethod.Nearest;this._headerContextMenuCallback=null;this._rowContextMenuCallback=null;}
+static setElementText(element,newText,longText){if(longText&&newText.length>1000){element.textContent=newText.trimEnd(1000);element.title=newText;element[DataGrid.DataGrid._longTextSymbol]=newText;}else{element.textContent=newText;element.title='';element[DataGrid.DataGrid._longTextSymbol]=undefined;}}
 setStriped(isStriped){this.element.classList.toggle('striped-data-grid',isStriped);}
 headerTableBody(){return this._headerTableBody;}
 _innerAddColumn(column,position){var columnId=column.id;if(columnId in this._columns)
@@ -33,9 +34,10 @@ _startEditing(target){var element=(target.enclosingNodeOrSelfWithNodeName('td'))
 return;this._editingNode=this.dataGridNodeFromNode(target);if(!this._editingNode){if(!this.creationNode)
 return;this._editingNode=this.creationNode;}
 if(this._editingNode.isCreationNode){this._startEditingColumnOfDataGridNode(this._editingNode,this._nextEditableColumn(-1));return;}
-this._editing=true;UI.InplaceEditor.startEditing(element,this._startEditingConfig(element));element.getComponentSelection().selectAllChildren(element);}
+this._editing=true;if(element[DataGrid.DataGrid._longTextSymbol])
+element.textContent=element[DataGrid.DataGrid._longTextSymbol];UI.InplaceEditor.startEditing(element,this._startEditingConfig(element));element.getComponentSelection().selectAllChildren(element);}
 renderInline(){this.element.classList.add('inline');this._cornerWidth=0;this._inline=true;this.updateWidths();}
-_startEditingConfig(element){return new UI.InplaceEditor.Config(this._editingCommitted.bind(this),this._editingCancelled.bind(this),element.textContent);}
+_startEditingConfig(element){return new UI.InplaceEditor.Config(this._editingCommitted.bind(this),this._editingCancelled.bind(this));}
 _editingCommitted(element,newText,oldText,context,moveDirection){var columnId=this.columnIdFromNode(element);if(!columnId){this._editingCancelled(element);return;}
 var column=this._columns[columnId];var cellIndex=this._visibleColumnsArray.indexOf(column);var textBeforeEditing=(this._editingNode.data[columnId]||'');var currentEditingNode=this._editingNode;function moveToNextIfNeeded(wasChange){if(!moveDirection)
 return;if(moveDirection==='forward'){var firstEditableColumn=this._nextEditableColumn(-1);if(currentEditingNode.isCreationNode&&cellIndex===firstEditableColumn&&!wasChange)
@@ -46,7 +48,7 @@ return;}
 if(moveDirection==='backward'){var prevEditableColumn=this._nextEditableColumn(cellIndex,true);if(prevEditableColumn!==-1){this._startEditingColumnOfDataGridNode(currentEditingNode,prevEditableColumn);return;}
 var lastEditableColumn=this._nextEditableColumn(this._visibleColumnsArray.length,true);var nextDataGridNode=currentEditingNode.traversePreviousNode(true,true);if(nextDataGridNode)
 this._startEditingColumnOfDataGridNode(nextDataGridNode,lastEditableColumn);return;}}
-if(textBeforeEditing===newText){this._editingCancelled(element);moveToNextIfNeeded.call(this,false);return;}
+DataGrid.DataGrid.setElementText(element,newText,!!column.longText);if(textBeforeEditing===newText){this._editingCancelled(element);moveToNextIfNeeded.call(this,false);return;}
 this._editingNode.data[columnId]=newText;this._editCallback(this._editingNode,columnId,textBeforeEditing,newText);if(this._editingNode.isCreationNode)
 this.addCreationNode(false);this._editingCancelled(element);moveToNextIfNeeded.call(this,true);}
 _editingCancelled(element){this._editing=false;this._editingNode=null;}
@@ -148,9 +150,9 @@ setRowContextMenuCallback(callback){this._rowContextMenuCallback=callback;}
 _contextMenu(event){var contextMenu=new UI.ContextMenu(event);var target=(event.target);if(target.isSelfOrDescendant(this._headerTableBody)){if(this._headerContextMenuCallback)
 this._headerContextMenuCallback(contextMenu);return;}
 var gridNode=this.dataGridNodeFromNode(target);if(this._refreshCallback&&(!gridNode||gridNode!==this.creationNode))
-contextMenu.appendItem(Common.UIString('Refresh'),this._refreshCallback.bind(this));if(gridNode&&gridNode.selectable&&!gridNode.isEventWithinDisclosureTriangle(event)){if(this._editCallback){if(gridNode===this.creationNode){contextMenu.appendItem(Common.UIString('Add new'),this._startEditing.bind(this,target));}else{var columnId=this.columnIdFromNode(target);if(columnId&&this._columns[columnId].editable){contextMenu.appendItem(Common.UIString('Edit "%s"',this._columns[columnId].title),this._startEditing.bind(this,target));}}}
+contextMenu.defaultSection().appendItem(Common.UIString('Refresh'),this._refreshCallback.bind(this));if(gridNode&&gridNode.selectable&&!gridNode.isEventWithinDisclosureTriangle(event)){if(this._editCallback){if(gridNode===this.creationNode){contextMenu.defaultSection().appendItem(Common.UIString('Add new'),this._startEditing.bind(this,target));}else{var columnId=this.columnIdFromNode(target);if(columnId&&this._columns[columnId].editable){contextMenu.defaultSection().appendItem(Common.UIString('Edit "%s"',this._columns[columnId].title),this._startEditing.bind(this,target));}}}
 if(this._deleteCallback&&gridNode!==this.creationNode)
-contextMenu.appendItem(Common.UIString('Delete'),this._deleteCallback.bind(this,gridNode));if(this._rowContextMenuCallback)
+contextMenu.defaultSection().appendItem(Common.UIString('Delete'),this._deleteCallback.bind(this,gridNode));if(this._rowContextMenuCallback)
 this._rowContextMenuCallback(contextMenu,gridNode);}
 contextMenu.show();}
 _clickInDataTable(event){var gridNode=this.dataGridNodeFromNode((event.target));if(!gridNode||!gridNode.hasChildren()||!gridNode.isEventWithinDisclosureTriangle(event))
@@ -175,7 +177,7 @@ return this._resizers[i-1].__position;}}
 return 0;}
 asWidget(){if(!this._dataGridWidget)
 this._dataGridWidget=new DataGrid.DataGridWidget(this);return this._dataGridWidget;}
-topFillerRowElement(){return this._topFillerRow;}};DataGrid.DataGrid.CornerWidth=14;DataGrid.DataGrid.ColumnDescriptor;DataGrid.DataGrid.Events={SelectedNode:Symbol('SelectedNode'),DeselectedNode:Symbol('DeselectedNode'),OpenedNode:Symbol('OpenedNode'),SortingChanged:Symbol('SortingChanged'),PaddingChanged:Symbol('PaddingChanged'),};DataGrid.DataGrid.Order={Ascending:'sort-ascending',Descending:'sort-descending'};DataGrid.DataGrid.Align={Center:'center',Right:'right'};DataGrid.DataGrid._preferredWidthSymbol=Symbol('preferredWidth');DataGrid.DataGrid._columnIdSymbol=Symbol('columnId');DataGrid.DataGrid._sortIconSymbol=Symbol('sortIcon');DataGrid.DataGrid.ColumnResizePadding=24;DataGrid.DataGrid.CenterResizerOverBorderAdjustment=3;DataGrid.DataGrid.ResizeMethod={Nearest:'nearest',First:'first',Last:'last'};DataGrid.DataGridNode=class extends Common.Object{constructor(data,hasChildren){super();this._element=null;this._expanded=false;this._selected=false;this._dirty=false;this._inactive=false;this._depth;this._revealed;this._attached=false;this._savedPosition=null;this._shouldRefreshChildren=true;this._data=data||{};this._hasChildren=hasChildren||false;this.children=[];this.dataGrid=null;this.parent=null;this.previousSibling=null;this.nextSibling=null;this.disclosureToggleWidth=10;this.selectable=true;this._isRoot=false;}
+topFillerRowElement(){return this._topFillerRow;}};DataGrid.DataGrid.CornerWidth=14;DataGrid.DataGrid.ColumnDescriptor;DataGrid.DataGrid.Events={SelectedNode:Symbol('SelectedNode'),DeselectedNode:Symbol('DeselectedNode'),OpenedNode:Symbol('OpenedNode'),SortingChanged:Symbol('SortingChanged'),PaddingChanged:Symbol('PaddingChanged'),};DataGrid.DataGrid.Order={Ascending:'sort-ascending',Descending:'sort-descending'};DataGrid.DataGrid.Align={Center:'center',Right:'right'};DataGrid.DataGrid._preferredWidthSymbol=Symbol('preferredWidth');DataGrid.DataGrid._columnIdSymbol=Symbol('columnId');DataGrid.DataGrid._sortIconSymbol=Symbol('sortIcon');DataGrid.DataGrid._longTextSymbol=Symbol('longText');DataGrid.DataGrid.ColumnResizePadding=24;DataGrid.DataGrid.CenterResizerOverBorderAdjustment=3;DataGrid.DataGrid.ResizeMethod={Nearest:'nearest',First:'first',Last:'last'};DataGrid.DataGridNode=class extends Common.Object{constructor(data,hasChildren){super();this._element=null;this._expanded=false;this._selected=false;this._dirty=false;this._inactive=false;this._depth;this._revealed;this._attached=false;this._savedPosition=null;this._shouldRefreshChildren=true;this._data=data||{};this._hasChildren=hasChildren||false;this.children=[];this.dataGrid=null;this.parent=null;this.previousSibling=null;this.nextSibling=null;this.disclosureToggleWidth=10;this.selectable=true;this._isRoot=false;}
 element(){if(!this._element){var element=this.createElement();this.createCells(element);}
 return(this._element);}
 createElement(){this._element=createElementWithClass('tr','data-grid-data-grid-node');this._element._dataGridNode=this;if(this._hasChildren)
@@ -240,9 +242,9 @@ createTD(columnId){var cell=this._createTDWithClass(columnId+'-column');cell[Dat
 cell.classList.add(alignment);if(columnId===this.dataGrid.disclosureColumnId){cell.classList.add('disclosure');if(this.leftPadding)
 cell.style.setProperty('padding-left',this.leftPadding+'px');}
 return cell;}
-createCell(columnId){var cell=this.createTD(columnId);var data=this.data[columnId];if(data instanceof Node){cell.appendChild(data);}else if(data!==null){cell.textContent=data;if(this.dataGrid._columns[columnId].longText)
-cell.title=data;}
-return cell;}
+createCell(columnId){var cell=this.createTD(columnId);var data=this.data[columnId];if(data instanceof Node)
+cell.appendChild(data);else if(data!==null)
+DataGrid.DataGrid.setElementText(cell,(data),!!this.dataGrid._columns[columnId].longText);return cell;}
 nodeSelfHeight(){return 20;}
 appendChild(child){this.insertChild(child,this.children.length);}
 resetNode(onlyCaches){delete this._depth;delete this._revealed;if(onlyCaches)
@@ -369,7 +371,7 @@ result+=nodes[i].nodeSelfHeight();return result;}
 _update(){if(this._updateAnimationFrameId){this.element.window().cancelAnimationFrame(this._updateAnimationFrameId);delete this._updateAnimationFrameId;}
 var clientHeight=this._scrollContainer.clientHeight;var scrollTop=this._scrollContainer.scrollTop;var currentScrollTop=scrollTop;var maxScrollTop=Math.max(0,this._contentHeight()-clientHeight);if(!this._updateIsFromUser&&this._stickToBottom)
 scrollTop=maxScrollTop;this._updateIsFromUser=false;scrollTop=Math.min(maxScrollTop,scrollTop);var viewportState=this._calculateVisibleNodes(clientHeight,scrollTop);var visibleNodes=viewportState.visibleNodes;var visibleNodesSet=new Set(visibleNodes);for(var i=0;i<this._visibleNodes.length;++i){var oldNode=this._visibleNodes[i];if(!visibleNodesSet.has(oldNode)&&oldNode.attached()){var element=oldNode.existingElement();element.remove();}}
-var previousElement=this.topFillerRowElement();var tBody=this.dataTableBody;var offset=viewportState.offset;if(visibleNodes.length){var nodes=this.rootNode().flatChildren();var index=nodes.indexOf(visibleNodes[0]);this._updateStripesClass(!!(index%2));if(index!==-1&&!!(index%2)!==this._firstVisibleIsStriped)
+var previousElement=this.topFillerRowElement();var tBody=this.dataTableBody;var offset=viewportState.offset;if(visibleNodes.length){var nodes=this.rootNode().flatChildren();var index=nodes.indexOf(visibleNodes[0]);this._updateStripesClass(!!(index%2));if(this._stickToBottom&&index!==-1&&!!(index%2)!==this._firstVisibleIsStriped)
 offset+=1;}
 this._firstVisibleIsStriped=!!(offset%2);for(var i=0;i<visibleNodes.length;++i){var node=visibleNodes[i];var element=node.element();node.setStriped((offset+i)%2===0);if(element!==previousElement.nextSibling)
 tBody.insertBefore(element,previousElement.nextSibling);node.revealed=true;previousElement=element;}

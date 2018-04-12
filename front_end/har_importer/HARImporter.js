@@ -57,7 +57,9 @@ HARImporter.Importer = class {
   static _fillRequestFromHAREntry(request, entry, pageLoad) {
     // Request data.
     if (entry.request.postData)
-      request.requestFormData = entry.request.postData.text;
+      request.setRequestFormData(true, entry.request.postData.text);
+    else
+      request.setRequestFormData(false, null);
     request.connectionId = entry.connection || '';
     request.requestMethod = entry.request.method;
     request.setRequestHeaders(entry.request.headers);
@@ -96,7 +98,7 @@ HARImporter.Importer = class {
     var contentData = {error: null, content: null, encoded: entry.response.content.encoding === 'base64'};
     if (entry.response.content.text !== undefined)
       contentData.content = entry.response.content.text;
-    request.setContentData(contentData);
+    request.setContentDataProvider(async () => contentData);
 
     // Timing data.
     HARImporter.Importer._setupTiming(request, issueTime, entry.time, entry.timings);

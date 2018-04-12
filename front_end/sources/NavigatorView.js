@@ -52,23 +52,18 @@ Sources.NavigatorView = class extends UI.VBox {
     this._frameNodes = new Map();
 
     this.contentElement.addEventListener('contextmenu', this.handleContextMenu.bind(this), false);
+    UI.shortcutRegistry.addShortcutListener(
+        this.contentElement, 'sources.rename', this._renameShortcut.bind(this), true);
 
     this._navigatorGroupByFolderSetting = Common.moduleSetting('navigatorGroupByFolder');
     this._navigatorGroupByFolderSetting.addChangeListener(this._groupingChanged.bind(this));
 
     this._initGrouping();
 
-    if (Runtime.experiments.isEnabled('persistence2')) {
-      Persistence.persistence.addEventListener(
-          Persistence.Persistence.Events.BindingCreated, this._onBindingChanged, this);
-      Persistence.persistence.addEventListener(
-          Persistence.Persistence.Events.BindingRemoved, this._onBindingChanged, this);
-    } else {
-      Persistence.persistence.addEventListener(
-          Persistence.Persistence.Events.BindingCreated, this._onBindingCreated, this);
-      Persistence.persistence.addEventListener(
-          Persistence.Persistence.Events.BindingRemoved, this._onBindingRemoved, this);
-    }
+    Persistence.persistence.addEventListener(
+        Persistence.Persistence.Events.BindingCreated, this._onBindingChanged, this);
+    Persistence.persistence.addEventListener(
+        Persistence.Persistence.Events.BindingRemoved, this._onBindingChanged, this);
     SDK.targetManager.addEventListener(SDK.TargetManager.Events.NameChanged, this._targetNameChanged, this);
 
     SDK.targetManager.observeTargets(this);
@@ -127,7 +122,7 @@ Sources.NavigatorView = class extends UI.VBox {
     }
 
     var addFolderLabel = Common.UIString('Add folder to workspace');
-    contextMenu.appendItem(addFolderLabel, addFolder);
+    contextMenu.defaultSection().appendItem(addFolderLabel, addFolder);
   }
 
   /**
@@ -144,7 +139,7 @@ Sources.NavigatorView = class extends UI.VBox {
       path = '*';
       searchLabel = Common.UIString('Search in all files');
     }
-    contextMenu.appendItem(searchLabel, searchPath);
+    contextMenu.viewSection().appendItem(searchLabel, searchPath);
   }
 
   /**
@@ -161,22 +156,6 @@ Sources.NavigatorView = class extends UI.VBox {
     if (typeWeight1 < typeWeight2)
       return -1;
     return treeElement1.titleAsText().compareTo(treeElement2.titleAsText());
-  }
-
-  /**
-   * @param {!Common.Event} event
-   */
-  _onBindingCreated(event) {
-    var binding = /** @type {!Persistence.PersistenceBinding} */ (event.data);
-    this._removeUISourceCode(binding.network);
-  }
-
-  /**
-   * @param {!Common.Event} event
-   */
-  _onBindingRemoved(event) {
-    var binding = /** @type {!Persistence.PersistenceBinding} */ (event.data);
-    this._addUISourceCode(binding.network);
   }
 
   /**
@@ -226,7 +205,20 @@ Sources.NavigatorView = class extends UI.VBox {
     this._workspace = workspace;
     this._workspace.addEventListener(Workspace.Workspace.Events.UISourceCodeAdded, this._uiSourceCodeAdded, this);
     this._workspace.addEventListener(Workspace.Workspace.Events.UISourceCodeRemoved, this._uiSourceCodeRemoved, this);
-    this._workspace.addEventListener(Workspace.Workspace.Events.ProjectRemoved, this._projectRemoved.bind(this), this);
+    this._workspace.addEventListener(Workspace.Workspace.Events.ProjectAdded, event => {
+      var project = /** @type {!Workspace.Project} */ (event.data);
+      this._projectAdded(project);
+      if (project.type() === Workspace.projectTypes.FileSystem)
+        this._computeUniqueFileSystemProjectNames();
+    });
+    this._workspace.addEventListener(Workspace.Workspace.Events.ProjectRemoved, event => {
+      var project = /** @type {!Workspace.Project} */ (event.data);
+      this._removeProject(project);
+      if (project.type() === Workspace.projectTypes.FileSystem)
+        this._computeUniqueFileSystemProjectNames();
+    });
+    this._workspace.projects().forEach(this._projectAdded.bind(this));
+    this._computeUniqueFileSystemProjectNames();
   }
 
   /**
@@ -238,11 +230,11 @@ Sources.NavigatorView = class extends UI.VBox {
   }
 
   /**
-   * @param {!Workspace.UISourceCode} uiSourceCode
+   * @param {!Workspace.Project} project
    * @return {boolean}
    */
-  accept(uiSourceCode) {
-    return !uiSourceCode.project().isServiceProject();
+  acceptProject(project) {
+    return !project.isServiceProject();
   }
 
   /**
@@ -276,13 +268,7 @@ Sources.NavigatorView = class extends UI.VBox {
    * @return {boolean}
    */
   _acceptsUISourceCode(uiSourceCode) {
-    if (!this.accept(uiSourceCode))
-      return false;
-
-    var binding = Persistence.persistence.binding(uiSourceCode);
-    if (!Runtime.experiments.isEnabled('persistence2') && binding && binding.network === uiSourceCode)
-      return false;
-    return true;
+    return this.acceptProject(uiSourceCode.project());
   }
 
   /**
@@ -346,14 +332,64 @@ Sources.NavigatorView = class extends UI.VBox {
   }
 
   /**
-   * @param {!Common.Event} event
+   * @protected
+   * @param {!Workspace.Project} project
    */
-  _projectRemoved(event) {
-    var project = /** @type {!Workspace.Project} */ (event.data);
+  tryAddProject(project) {
+    this._projectAdded(project);
+    project.uiSourceCodes().forEach(this._addUISourceCode.bind(this));
+  }
 
+  /**
+   * @param {!Workspace.Project} project
+   */
+  _projectAdded(project) {
+    if (!this.acceptProject(project) || project.type() !== Workspace.projectTypes.FileSystem ||
+        this._rootNode.child(project.id()))
+      return;
+    this._rootNode.appendChild(new Sources.NavigatorGroupTreeNode(
+        this, project, project.id(), Sources.NavigatorView.Types.FileSystem, project.displayName()));
+  }
+
+  _computeUniqueFileSystemProjectNames() {
+    var fileSystemProjects = this._workspace.projectsForType(Workspace.projectTypes.FileSystem);
+    if (!fileSystemProjects.length)
+      return;
+    var encoder = new Persistence.PathEncoder();
+    var reversedPaths = fileSystemProjects.map(project => {
+      var fileSystem = /** @type {!Persistence.FileSystemWorkspaceBinding.FileSystem} */ (project);
+      return encoder.encode(fileSystem.fileSystemPath()).reverse();
+    });
+    var reversedIndex = new Common.Trie();
+    for (var reversedPath of reversedPaths)
+      reversedIndex.add(reversedPath);
+
+    for (var i = 0; i < fileSystemProjects.length; ++i) {
+      var reversedPath = reversedPaths[i];
+      var project = fileSystemProjects[i];
+      reversedIndex.remove(reversedPath);
+      var commonPrefix = reversedIndex.longestPrefix(reversedPath, false /* fullWordOnly */);
+      reversedIndex.add(reversedPath);
+      var path = encoder.decode(reversedPath.substring(0, commonPrefix.length + 1).reverse());
+      var fileSystemNode = this._rootNode.child(project.id());
+      if (fileSystemNode)
+        fileSystemNode.setTitle(path);
+    }
+  }
+
+  /**
+   * @param {!Workspace.Project} project
+   */
+  _removeProject(project) {
     var uiSourceCodes = project.uiSourceCodes();
     for (var i = 0; i < uiSourceCodes.length; ++i)
       this._removeUISourceCode(uiSourceCodes[i]);
+    if (project.type() !== Workspace.projectTypes.FileSystem)
+      return;
+    var fileSystemNode = this._rootNode.child(project.id());
+    if (!fileSystemNode)
+      return;
+    this._rootNode.removeChild(fileSystemNode);
   }
 
   /**
@@ -397,13 +433,7 @@ Sources.NavigatorView = class extends UI.VBox {
     if (!path.length) {
       if (target)
         return this._domainNode(uiSourceCode, project, target, frame, projectOrigin);
-      var fileSystemNode = this._rootNode.child(project.id());
-      if (!fileSystemNode) {
-        fileSystemNode = new Sources.NavigatorGroupTreeNode(
-            this, project, project.id(), Sources.NavigatorView.Types.FileSystem, project.displayName());
-        this._rootNode.appendChild(fileSystemNode);
-      }
-      return fileSystemNode;
+      return /** @type {!Sources.NavigatorTreeNode} */ (this._rootNode.child(project.id()));
     }
 
     var parentNode =
@@ -586,6 +616,8 @@ Sources.NavigatorView = class extends UI.VBox {
       parentNode = node.parent;
       if (!parentNode || !node.isEmpty())
         break;
+      if (parentNode === this._rootNode && project.type() === Workspace.projectTypes.FileSystem)
+        break;
       if (!(node instanceof Sources.NavigatorGroupTreeNode || node instanceof Sources.NavigatorFolderTreeNode))
         break;
       if (node._type === Sources.NavigatorView.Types.Frame) {
@@ -615,6 +647,17 @@ Sources.NavigatorView = class extends UI.VBox {
    * @param {!Event} event
    */
   handleContextMenu(event) {
+  }
+
+  /**
+   * @return {boolean}
+   */
+  _renameShortcut() {
+    var node = this._scriptsTree.selectedTreeElement && this._scriptsTree.selectedTreeElement._node;
+    if (!node || !node._uiSourceCode || !node._uiSourceCode.canRename())
+      return false;
+    this.rename(node, false);
+    return true;
   }
 
   /**
@@ -668,15 +711,15 @@ Sources.NavigatorView = class extends UI.VBox {
     var uiSourceCode = node.uiSourceCode();
     var contextMenu = new UI.ContextMenu(event);
     contextMenu.appendApplicableItems(uiSourceCode);
-    contextMenu.appendSeparator();
 
     var project = uiSourceCode.project();
     if (project.type() === Workspace.projectTypes.FileSystem) {
-      contextMenu.appendItem(Common.UIString('Rename\u2026'), this._handleContextMenuRename.bind(this, node));
-      contextMenu.appendItem(
+      contextMenu.editSection().appendItem(
+          Common.UIString('Rename\u2026'), this._handleContextMenuRename.bind(this, node));
+      contextMenu.editSection().appendItem(
           Common.UIString('Make a copy\u2026'), this._handleContextMenuCreate.bind(this, project, '', uiSourceCode));
-      contextMenu.appendItem(Common.UIString('Delete'), this._handleContextMenuDelete.bind(this, uiSourceCode));
-      contextMenu.appendSeparator();
+      contextMenu.editSection().appendItem(
+          Common.UIString('Delete'), this._handleContextMenuDelete.bind(this, uiSourceCode));
     }
 
     contextMenu.show();
@@ -684,22 +727,29 @@ Sources.NavigatorView = class extends UI.VBox {
 
   /**
    * @param {!Event} event
-   * @param {!Sources.NavigatorFolderTreeNode} node
+   * @param {!Sources.NavigatorTreeNode} node
    */
   handleFolderContextMenu(event, node) {
-    var path = node._folderPath;
+    var path = node._folderPath || '';
     var project = node._project;
 
     var contextMenu = new UI.ContextMenu(event);
 
     Sources.NavigatorView.appendSearchItem(contextMenu, path);
-    contextMenu.appendSeparator();
 
-    if (project.type() !== Workspace.projectTypes.FileSystem)
-      return;
+    var folderPath = Common.ParsedURL.urlToPlatformPath(
+        Persistence.FileSystemWorkspaceBinding.completeURL(project, path), Host.isWin());
+    contextMenu.revealSection().appendItem(
+        Common.UIString('Open folder'), () => InspectorFrontendHost.showItemInFolder(folderPath));
+    if (project.canCreateFile()) {
+      contextMenu.defaultSection().appendItem(
+          Common.UIString('New file'), this._handleContextMenuCreate.bind(this, project, path));
+    }
 
-    contextMenu.appendItem(Common.UIString('New file'), this._handleContextMenuCreate.bind(this, project, path));
-    contextMenu.appendItem(Common.UIString('Exclude folder'), this._handleContextMenuExclude.bind(this, project, path));
+    if (project.canExcludeFolder(path)) {
+      contextMenu.defaultSection().appendItem(
+          Common.UIString('Exclude folder'), this._handleContextMenuExclude.bind(this, project, path));
+    }
 
     function removeFolder() {
       var shouldRemove = window.confirm(Common.UIString('Are you sure you want to remove this folder?'));
@@ -707,20 +757,21 @@ Sources.NavigatorView = class extends UI.VBox {
         project.remove();
     }
 
-    contextMenu.appendSeparator();
-    Sources.NavigatorView.appendAddFolderItem(contextMenu);
-    if (node instanceof Sources.NavigatorGroupTreeNode)
-      contextMenu.appendItem(Common.UIString('Remove folder from workspace'), removeFolder);
+    if (project.type() === Workspace.projectTypes.FileSystem) {
+      Sources.NavigatorView.appendAddFolderItem(contextMenu);
+      if (node instanceof Sources.NavigatorGroupTreeNode)
+        contextMenu.defaultSection().appendItem(Common.UIString('Remove folder from workspace'), removeFolder);
+    }
 
     contextMenu.show();
   }
 
   /**
    * @param {!Sources.NavigatorUISourceCodeTreeNode} node
-   * @param {boolean} deleteIfCanceled
+   * @param {boolean} creatingNewUISourceCode
    * @protected
    */
-  rename(node, deleteIfCanceled) {
+  rename(node, creatingNewUISourceCode) {
     var uiSourceCode = node.uiSourceCode();
     node.rename(callback.bind(this));
 
@@ -729,13 +780,12 @@ Sources.NavigatorView = class extends UI.VBox {
      * @param {boolean} committed
      */
     function callback(committed) {
-      if (!committed) {
-        if (deleteIfCanceled)
-          uiSourceCode.remove();
+      if (!creatingNewUISourceCode)
         return;
-      }
-
-      this._sourceSelected(uiSourceCode, true);
+      if (!committed)
+        uiSourceCode.remove();
+      else if (node._treeElement.listItemElement.hasFocus())
+        this._sourceSelected(uiSourceCode, true);
     }
   }
 
@@ -744,40 +794,17 @@ Sources.NavigatorView = class extends UI.VBox {
    * @param {string} path
    * @param {!Workspace.UISourceCode=} uiSourceCodeToCopy
    */
-  create(project, path, uiSourceCodeToCopy) {
-    /**
-     * @this {Sources.NavigatorView}
-     * @param {?string} content
-     */
-    function contentLoaded(content) {
-      createFile.call(this, content || '');
-    }
-
+  async create(project, path, uiSourceCodeToCopy) {
+    var content = '';
     if (uiSourceCodeToCopy)
-      uiSourceCodeToCopy.requestContent().then(contentLoaded.bind(this));
-    else
-      createFile.call(this);
-
-    /**
-     * @this {Sources.NavigatorView}
-     * @param {string=} content
-     */
-    function createFile(content) {
-      project.createFile(path, null, content || '', fileCreated.bind(this));
-    }
-
-    /**
-     * @this {Sources.NavigatorView}
-     * @param {?Workspace.UISourceCode} uiSourceCode
-     */
-    function fileCreated(uiSourceCode) {
-      if (!uiSourceCode)
-        return;
-      this._sourceSelected(uiSourceCode, false);
-      var node = this.revealUISourceCode(uiSourceCode, true);
-      if (node)
-        this.rename(node, true);
-    }
+      content = (await uiSourceCodeToCopy.requestContent()) || '';
+    var uiSourceCode = await project.createFile(path, null, content);
+    if (!uiSourceCode)
+      return;
+    this._sourceSelected(uiSourceCode, false);
+    var node = this.revealUISourceCode(uiSourceCode, true);
+    if (node)
+      this.rename(node, true);
   }
 
   _groupingChanged() {
@@ -968,10 +995,13 @@ Sources.NavigatorSourceTreeElement = class extends UI.TreeElement {
 
   updateIcon() {
     var binding = Persistence.persistence.binding(this._uiSourceCode);
-    if (binding && Runtime.experiments.isEnabled('persistence2')) {
+    if (binding) {
       var container = createElementWithClass('span', 'icon-stack');
       var icon = UI.Icon.create('largeicon-navigator-file-sync', 'icon');
       var badge = UI.Icon.create('badge-navigator-file-sync', 'icon-badge');
+      // TODO(allada) This does not play well with dark theme. Add an actual icon and use it.
+      if (Persistence.networkPersistenceManager.project() === binding.fileSystem.project())
+        badge.style.filter = 'hue-rotate(160deg)';
       container.appendChild(icon);
       container.appendChild(badge);
       container.title = Persistence.PersistenceUtils.tooltipForUISourceCode(this._uiSourceCode);
@@ -1311,8 +1341,7 @@ Sources.NavigatorUISourceCodeTreeNode = class extends Sources.NavigatorTreeNode 
       return;
 
     var titleText = this._uiSourceCode.displayName();
-    if (!ignoreIsDirty &&
-        (this._uiSourceCode.isDirty() || Persistence.persistence.hasUnsavedCommittedChanges(this._uiSourceCode)))
+    if (!ignoreIsDirty && this._uiSourceCode.isDirty())
       titleText = '*' + titleText;
 
     this._treeElement.title = titleText;
@@ -1357,6 +1386,8 @@ Sources.NavigatorUISourceCodeTreeNode = class extends Sources.NavigatorTreeNode 
     if (!this._treeElement)
       return;
 
+    this._treeElement.listItemElement.focus();
+
     // Tree outline should be marked as edited as well as the tree element to prevent search from starting.
     var treeOutlineElement = this._treeElement.treeOutline.element;
     UI.markBeingEdited(treeOutlineElement, true);
@@ -1397,7 +1428,6 @@ Sources.NavigatorUISourceCodeTreeNode = class extends Sources.NavigatorTreeNode 
     function afterEditing(committed) {
       UI.markBeingEdited(treeOutlineElement, false);
       this.updateTitle();
-      this._treeElement.treeOutline.focus();
       if (callback)
         callback(committed);
     }
@@ -1445,9 +1475,7 @@ Sources.NavigatorFolderTreeNode = class extends Sources.NavigatorTreeNode {
       return;
     var absoluteFileSystemPath =
         Persistence.FileSystemWorkspaceBinding.fileSystemPath(this._project.id()) + '/' + this._folderPath;
-    var hasMappedFiles = Runtime.experiments.isEnabled('persistence2') ?
-        Persistence.persistence.filePathHasBindings(absoluteFileSystemPath) :
-        true;
+    var hasMappedFiles = Persistence.persistence.filePathHasBindings(absoluteFileSystemPath);
     this._treeElement.listItemElement.classList.toggle('has-mapped-files', hasMappedFiles);
   }
 
@@ -1620,16 +1648,14 @@ Sources.NavigatorGroupTreeNode = class extends Sources.NavigatorTreeNode {
   updateTitle() {
     if (!this._treeElement || this._project.type() !== Workspace.projectTypes.FileSystem)
       return;
-    if (!Runtime.experiments.isEnabled('persistence2')) {
-      this._treeElement.listItemElement.classList.add('has-mapped-files');
-      return;
-    }
     var fileSystemPath = Persistence.FileSystemWorkspaceBinding.fileSystemPath(this._project.id());
     var wasActive = this._treeElement.listItemElement.classList.contains('has-mapped-files');
     var isActive = Persistence.persistence.filePathHasBindings(fileSystemPath);
     if (wasActive === isActive)
       return;
     this._treeElement.listItemElement.classList.toggle('has-mapped-files', isActive);
+    if (this._treeElement.childrenListElement.hasFocus())
+      return;
     if (isActive)
       this._treeElement.expand();
     else

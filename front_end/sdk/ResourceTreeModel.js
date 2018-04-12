@@ -483,6 +483,7 @@ SDK.ResourceTreeModel.Events = {
   WillLoadCachedResources: Symbol('WillLoadCachedResources'),
   CachedResourcesLoaded: Symbol('CachedResourcesLoaded'),
   DOMContentLoaded: Symbol('DOMContentLoaded'),
+  LifecycleEvent: Symbol('LifecycleEvent'),
   Load: Symbol('Load'),
   PageReloadRequested: Symbol('PageReloadRequested'),
   WillReloadPage: Symbol('WillReloadPage'),
@@ -772,6 +773,17 @@ SDK.PageDispatcher = class {
   /**
    * @override
    * @param {!Protocol.Page.FrameId} frameId
+   * @param {!Protocol.Network.LoaderId} loaderId
+   * @param {string} name
+   * @param {number} time
+   */
+  lifecycleEvent(frameId, loaderId, name, time) {
+    this._resourceTreeModel.dispatchEventToListeners(SDK.ResourceTreeModel.Events.LifecycleEvent, {frameId, name});
+  }
+
+  /**
+   * @override
+   * @param {!Protocol.Page.FrameId} frameId
    * @param {!Protocol.Page.FrameId} parentFrameId
    * @param {!Protocol.Runtime.StackTrace=} stackTrace
    */
@@ -879,5 +891,15 @@ SDK.PageDispatcher = class {
   interstitialHidden() {
     this._resourceTreeModel._isInterstitialShowing = false;
     this._resourceTreeModel.dispatchEventToListeners(SDK.ResourceTreeModel.Events.InterstitialHidden);
+  }
+
+  /**
+   * @override
+   * @param {string} url
+   * @param {string} windowName
+   * @param {!Array<string>} windowFeatures
+   * @param {boolean} userGesture
+   */
+  windowOpen(url, windowName, windowFeatures, userGesture) {
   }
 };

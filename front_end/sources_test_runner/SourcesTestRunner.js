@@ -64,48 +64,13 @@ SourcesTestRunner.dumpNavigatorViewInAllModes = function(view) {
  * @param {string} mode
  */
 SourcesTestRunner.dumpNavigatorViewInMode = function(view, mode) {
-  TestRunner.addResult(view instanceof Sources.SourcesNavigatorView ? 'Sources:' : 'Content Scripts:');
+  TestRunner.addResult(view instanceof Sources.NetworkNavigatorView ? 'Sources:' : 'Content Scripts:');
   view._groupByFrame = mode.includes('frame');
   view._groupByDomain = mode.includes('domain');
   view._groupByFolder = mode.includes('folder');
   view._resetForTest();
   TestRunner.addResult('-------- Setting mode: [' + mode + ']');
   SourcesTestRunner.dumpNavigatorView(view);
-};
-
-/**
- * @param {string} urlSuffix
- * @param {!Workspace.projectTypes=} projectType
- * @return {!Promise}
- */
-SourcesTestRunner.waitForUISourceCode = function(urlSuffix, projectType) {
-  /**
-   * @param {!Workspace.UISourceCode} uiSourceCode
-   * @return {boolean}
-   */
-  function matches(uiSourceCode) {
-    if (projectType && uiSourceCode.project().type() !== projectType)
-      return false;
-    if (!projectType && uiSourceCode.project().type() === Workspace.projectTypes.Service)
-      return false;
-    if (urlSuffix && !uiSourceCode.url().endsWith(urlSuffix))
-      return false;
-    return true;
-  }
-
-  for (var uiSourceCode of Workspace.workspace.uiSourceCodes()) {
-    if (urlSuffix && matches(uiSourceCode))
-      return Promise.resolve(uiSourceCode);
-  }
-
-  return TestRunner.waitForEvent(Workspace.Workspace.Events.UISourceCodeAdded, Workspace.workspace, matches);
-};
-
-/**
- * @param {!Function} callback
- */
-SourcesTestRunner.waitForUISourceCodeRemoved = function(callback) {
-  Workspace.workspace.once(Workspace.Workspace.Events.UISourceCodeRemoved).then(callback);
 };
 
 /**
@@ -119,6 +84,71 @@ SourcesTestRunner.addScriptUISourceCode = function(url, content, isContentScript
   content += '\n//# sourceURL=' + url;
   if (isContentScript)
     content = `testRunner.evaluateScriptInIsolatedWorld(${worldId}, \`${content}\`)`;
-  TestRunner.evaluateInPagePromise(content);
-  return SourcesTestRunner.waitForUISourceCode(url);
+  TestRunner.evaluateInPageAnonymously(content);
+  return TestRunner.waitForUISourceCode(url);
+};
+
+function testSourceMapping(text1, text2, mapping, testToken) {
+  var originalPosition = text1.indexOf(testToken);
+  TestRunner.assertTrue(originalPosition !== -1);
+  var originalLocation = Formatter.Formatter.positionToLocation(text1.computeLineEndings(), originalPosition);
+  var formattedLocation = mapping.originalToFormatted(originalLocation[0], originalLocation[1]);
+  var formattedPosition =
+      Formatter.Formatter.locationToPosition(text2.computeLineEndings(), formattedLocation[0], formattedLocation[1]);
+  var expectedFormattedPosition = text2.indexOf(testToken);
+
+  if (expectedFormattedPosition === formattedPosition)
+    TestRunner.addResult(String.sprintf('Correct mapping for <%s>', testToken));
+  else
+    TestRunner.addResult(String.sprintf('ERROR: Wrong mapping for <%s>', testToken));
+}
+
+SourcesTestRunner.testPrettyPrint = function(mimeType, text, mappingQueries, next) {
+  new Formatter.ScriptFormatter(mimeType, text, didFormatContent);
+
+  function didFormatContent(formattedSource, mapping) {
+    TestRunner.addResult('====== 8< ------');
+    TestRunner.addResult(formattedSource);
+    TestRunner.addResult('------ >8 ======');
+
+    while (mappingQueries && mappingQueries.length)
+      testSourceMapping(text, formattedSource, mapping, mappingQueries.shift());
+
+    next();
+  }
+};
+
+SourcesTestRunner.testJavascriptOutline = function(text) {
+  var fulfill;
+  var promise = new Promise(x => fulfill = x);
+  Formatter.formatterWorkerPool().javaScriptOutline(text, onChunk);
+  var items = [];
+  return promise;
+
+  function onChunk(isLastChunk, outlineItems) {
+    items.pushAll(outlineItems);
+
+    if (!isLastChunk)
+      return;
+
+    TestRunner.addResult('Text:');
+    TestRunner.addResult(text.split('\n').map(line => '    ' + line).join('\n'));
+    TestRunner.addResult('Outline:');
+
+    for (var item of items)
+      TestRunner.addResult('    ' + item.name + (item.arguments || '') + ':' + item.line + ':' + item.column);
+
+    fulfill();
+  }
+};
+
+SourcesTestRunner.dumpSwatchPositions = function(sourceFrame, bookmarkType) {
+  var textEditor = sourceFrame.textEditor;
+  var markers = textEditor.bookmarks(textEditor.fullRange(), bookmarkType);
+
+  for (var i = 0; i < markers.length; i++) {
+    var position = markers[i].position();
+    var text = markers[i]._marker.widgetNode.firstChild.textContent;
+    TestRunner.addResult('Line ' + position.startLine + ', Column ' + position.startColumn + ': ' + text);
+  }
 };

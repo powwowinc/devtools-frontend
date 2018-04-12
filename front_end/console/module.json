@@ -25,7 +25,7 @@
             "className": "Console.ConsolePanel.ConsoleRevealer"
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "console.show",
             "className": "Console.ConsoleView.ActionDelegate",
             "bindings": [
@@ -35,7 +35,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "category": "Console",
             "actionId": "console.clear",
             "title": "Clear console",
@@ -53,7 +53,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "category": "Console",
             "actionId": "console.clear.history",
             "title": "Clear console history",
@@ -158,6 +158,24 @@
                     "title": "Do not autocomplete from history"
                 }
             ]
+        },
+        {
+            "type": "setting",
+            "category": "Console",
+            "title": "Group similar",
+            "settingName": "consoleGroupSimilar",
+            "settingType": "boolean",
+            "defaultValue": true,
+            "options": [
+                {
+                    "value": true,
+                    "title": "Group similar messages in console"
+                },
+                {
+                    "value": false,
+                    "title": "Do not group similar messages in console"
+                }
+            ]
         }
     ],
     "dependencies": [
@@ -170,6 +188,7 @@
     ],
     "scripts": [
         "ConsoleContextSelector.js",
+        "ConsoleFilter.js",
         "ConsoleSidebar.js",
         "ConsoleViewport.js",
         "ConsoleViewMessage.js",

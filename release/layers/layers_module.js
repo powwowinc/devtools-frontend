@@ -4,7 +4,7 @@ profile(snapshot){snapshot.commandLog().then(log=>setSnapshotAndLog.call(this,sn
 snapshot.release();}}
 setScale(scale){this._paintProfilerView.setScale(scale);}
 _onWindowChanged(){this._logTreeView.updateWindow(this._paintProfilerView.selectionWindow());}};;Layers.LayerTreeModel=class extends SDK.SDKModel{constructor(target){super(target);this._layerTreeAgent=target.layerTreeAgent();target.registerLayerTreeDispatcher(new Layers.LayerTreeDispatcher(this));this._paintProfilerModel=(target.model(SDK.PaintProfilerModel));var resourceTreeModel=target.model(SDK.ResourceTreeModel);if(resourceTreeModel){resourceTreeModel.addEventListener(SDK.ResourceTreeModel.Events.MainFrameNavigated,this._onMainFrameNavigated,this);}
-this._layerTree=null;}
+this._layerTree=null;this._throttler=new Common.Throttler(20);}
 disable(){if(!this._enabled)
 return;this._enabled=false;this._layerTreeAgent.disable();}
 enable(){if(this._enabled)
@@ -13,7 +13,8 @@ _forceEnable(){this._lastPaintRectByLayerId={};if(!this._layerTree)
 this._layerTree=new Layers.AgentLayerTree(this);this._layerTreeAgent.enable();}
 layerTree(){return this._layerTree;}
 async _layerTreeChanged(layers){if(!this._enabled)
-return;var layerTree=(this._layerTree);await layerTree.setLayers(layers);for(var layerId in this._lastPaintRectByLayerId){var lastPaintRect=this._lastPaintRectByLayerId[layerId];var layer=layerTree.layerById(layerId);if(layer)
+return;this._throttler.schedule(this._innerSetLayers.bind(this,layers));}
+async _innerSetLayers(layers){var layerTree=(this._layerTree);await layerTree.setLayers(layers);for(var layerId in this._lastPaintRectByLayerId){var lastPaintRect=this._lastPaintRectByLayerId[layerId];var layer=layerTree.layerById(layerId);if(layer)
 layer._lastPaintRect=lastPaintRect;}
 this._lastPaintRectByLayerId={};this.dispatchEventToListeners(Layers.LayerTreeModel.Events.LayerTreeChanged);}
 _layerPainted(layerId,clipRect){if(!this._enabled)

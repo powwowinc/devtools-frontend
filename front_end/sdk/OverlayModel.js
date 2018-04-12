@@ -58,6 +58,8 @@ SDK.OverlayModel = class extends SDK.SDKModel {
         () => this._overlayAgent.setShowScrollBottleneckRects(this._showScrollBottleneckRectsSetting.get()));
     if (this._showScrollBottleneckRectsSetting.get())
       this._overlayAgent.setShowScrollBottleneckRects(true);
+    if (target.suspended())
+      this._overlayAgent.setSuspended(true);
   }
 
   /**
@@ -122,7 +124,7 @@ SDK.OverlayModel = class extends SDK.SDKModel {
    * @return {!Promise}
    */
   async setInspectMode(mode) {
-    await this._domModel.requestDocumentPromise();
+    await this._domModel.requestDocument();
     this._inspectModeEnabled = mode !== Protocol.Overlay.InspectMode.None;
     this.dispatchEventToListeners(SDK.OverlayModel.Events.InspectModeWillBeToggled, this);
     this._highlighter.setInspectMode(mode, this._buildHighlightConfig());
@@ -210,6 +212,10 @@ SDK.OverlayModel = class extends SDK.SDKModel {
       highlightConfig.shapeMarginColor = Common.Color.PageHighlight.ShapeMargin.toProtocolRGBA();
       highlightConfig.displayAsMaterial = true;
     }
+
+    if (mode === 'all')
+      highlightConfig.cssGridColor = Common.Color.PageHighlight.CssGrid.toProtocolRGBA();
+
     return highlightConfig;
   }
 

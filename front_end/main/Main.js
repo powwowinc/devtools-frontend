@@ -89,53 +89,50 @@ Main.Main = class {
    * Note: this function is called from testSettings in Tests.js.
    */
   _createSettings(prefs) {
-    this._initializeExperiments(prefs);
+    this._initializeExperiments();
     var storagePrefix = '';
     if (Host.isCustomDevtoolsFrontend())
       storagePrefix = '__custom__';
-    else if (!Runtime.queryParam('can_dock') && !!Runtime.queryParam('debugFrontend') && !Host.isUnderTest(prefs))
+    else if (!Runtime.queryParam('can_dock') && !!Runtime.queryParam('debugFrontend') && !Host.isUnderTest())
       storagePrefix = '__bundled__';
-    var clearLocalStorage = window.localStorage ? window.localStorage.clear.bind(window.localStorage) : undefined;
-    var localStorage =
-        new Common.SettingsStorage(window.localStorage || {}, undefined, undefined, clearLocalStorage, storagePrefix);
+
+    var localStorage;
+    if (!Host.isUnderTest() && window.localStorage) {
+      localStorage = new Common.SettingsStorage(
+          window.localStorage, undefined, undefined, () => window.localStorage.clear(), storagePrefix);
+    } else {
+      localStorage = new Common.SettingsStorage({}, undefined, undefined, undefined, storagePrefix);
+    }
     var globalStorage = new Common.SettingsStorage(
         prefs, InspectorFrontendHost.setPreference, InspectorFrontendHost.removePreference,
         InspectorFrontendHost.clearPreferences, storagePrefix);
     Common.settings = new Common.Settings(globalStorage, localStorage);
-    if (!Host.isUnderTest(prefs))
+    if (!Host.isUnderTest())
       new Common.VersionController().updateVersion();
   }
 
-  /**
-   * @param {!Object<string, string>} prefs
-   */
-  _initializeExperiments(prefs) {
+  _initializeExperiments() {
     // Keep this sorted alphabetically: both keys and values.
     Runtime.experiments.register('accessibilityInspection', 'Accessibility Inspection');
     Runtime.experiments.register('applyCustomStylesheet', 'Allow custom UI themes');
-    Runtime.experiments.register('audits2', 'Audits 2.0');
-    Runtime.experiments.register('autoAttachToCrossProcessSubframes', 'Auto-attach to cross-process subframes', true);
     Runtime.experiments.register('blackboxJSFramesOnTimeline', 'Blackbox JavaScript frames on Timeline', true);
-    Runtime.experiments.register('changesDrawer', 'Changes drawer', true);
     Runtime.experiments.register('colorContrastRatio', 'Color contrast ratio line in color picker', true);
-    Runtime.experiments.register('continueToLocationMarkers', 'Continue to location markers', true);
     Runtime.experiments.register('emptySourceMapAutoStepping', 'Empty sourcemap auto-stepping');
     Runtime.experiments.register('inputEventsOnTimelineOverview', 'Input events on Timeline overview', true);
+    Runtime.experiments.register('oopifInlineDOM', 'OOPIF: inline DOM ', true);
     Runtime.experiments.register('logManagement', 'Log management', true);
-    Runtime.experiments.register('liveSASS', 'Live SASS');
-    Runtime.experiments.register('networkGroupingRequests', 'Network request groups support', true);
-    Runtime.experiments.register('objectPreviews', 'Object previews', true);
-    Runtime.experiments.register('persistence2', 'Persistence 2.0');
+    Runtime.experiments.register('nativeHeapProfiler', 'Native memory sampling heap profiler', true);
+    Runtime.experiments.register('performanceMonitor', 'Performance Monitor', true);
     Runtime.experiments.register('sourceDiff', 'Source diff');
+    Runtime.experiments.register(
+        'stepIntoAsync', 'Introduce separate step action, stepInto becomes powerful enough to go inside async call');
     Runtime.experiments.register('terminalInDrawer', 'Terminal in drawer', true);
 
     // Timeline
-    Runtime.experiments.register('timelineColorByProduct', 'Timeline: color by product', true);
     Runtime.experiments.register('timelineEventInitiators', 'Timeline: event initiators');
     Runtime.experiments.register('timelineFlowEvents', 'Timeline: flow events', true);
     Runtime.experiments.register('timelineInvalidationTracking', 'Timeline: invalidation tracking', true);
     Runtime.experiments.register('timelineKeepHistory', 'Timeline: keep recording history');
-    Runtime.experiments.register('timelineMultipleMainViews', 'Timeline: multiple main views');
     Runtime.experiments.register('timelinePaintTimingMarkers', 'Timeline: paint timing markers', true);
     Runtime.experiments.register('timelinePerFrameTrack', 'Timeline: per-frame tracks', true);
     Runtime.experiments.register('timelineShowAllEvents', 'Timeline: show all events', true);
@@ -145,24 +142,20 @@ Main.Main = class {
 
     Runtime.experiments.cleanUpStaleExperiments();
 
-    if (Host.isUnderTest(prefs)) {
-      var testPath = JSON.parse(prefs['testPath'] || '""');
+    if (Host.isUnderTest()) {
+      var testPath = Runtime.queryParam('test');
       // Enable experiments for testing.
       if (testPath.indexOf('accessibility/') !== -1)
         Runtime.experiments.enableForTest('accessibilityInspection');
-      if (testPath.indexOf('audits2/') !== -1)
-        Runtime.experiments.enableForTest('audits2');
-      if (testPath.indexOf('coverage/') !== -1)
-        Runtime.experiments.enableForTest('cssTrackerPanel');
-      if (testPath.indexOf('changes/') !== -1)
-        Runtime.experiments.enableForTest('changesDrawer');
-      if (testPath.indexOf('sass/') !== -1)
-        Runtime.experiments.enableForTest('liveSASS');
+      if (testPath.indexOf('console-sidebar/') !== -1)
+        Runtime.experiments.enableForTest('logManagement');
+      if (testPath.indexOf('oopif/') !== -1)
+        Runtime.experiments.enableForTest('oopifInlineDOM');
     }
 
     Runtime.experiments.setDefaultExperiments([
-      'continueToLocationMarkers', 'autoAttachToCrossProcessSubframes', 'objectPreviews', 'audits2',
-      'networkGroupingRequests', 'timelineColorByProduct'
+      'accessibilityInspection', 'colorContrastRatio', 'logManagement', 'performanceMonitor', 'stepIntoAsync',
+      'timelineKeepHistory', 'oopifInlineDOM'
     ]);
   }
 
@@ -197,7 +190,6 @@ Main.Main = class {
     Components.dockController = new Components.DockController(canDock);
     ConsoleModel.consoleModel = new ConsoleModel.ConsoleModel();
     SDK.multitargetNetworkManager = new SDK.MultitargetNetworkManager();
-    NetworkLog.networkLog = new NetworkLog.NetworkLog();
     SDK.domDebuggerManager = new SDK.DOMDebuggerManager();
     SDK.targetManager.addEventListener(
         SDK.TargetManager.Events.SuspendStateChanged, this._onSuspendStateChanged.bind(this));
@@ -211,7 +203,6 @@ Main.Main = class {
 
     Workspace.fileManager = new Workspace.FileManager();
     Workspace.workspace = new Workspace.Workspace();
-    Persistence.fileSystemMapping = new Persistence.FileSystemMapping(Persistence.isolatedFileSystemManager);
 
     Bindings.networkProjectManager = new Bindings.NetworkProjectManager(SDK.targetManager, Workspace.workspace);
     Bindings.resourceMapping = new Bindings.ResourceMapping(SDK.targetManager, Workspace.workspace);
@@ -223,8 +214,8 @@ Main.Main = class {
     Extensions.extensionServer = new Extensions.ExtensionServer();
 
     new Persistence.FileSystemWorkspaceBinding(Persistence.isolatedFileSystemManager, Workspace.workspace);
-    Persistence.persistence =
-        new Persistence.Persistence(Workspace.workspace, Bindings.breakpointManager, Persistence.fileSystemMapping);
+    Persistence.persistence = new Persistence.Persistence(Workspace.workspace, Bindings.breakpointManager);
+    Persistence.networkPersistenceManager = new Persistence.NetworkPersistenceManager(Workspace.workspace);
 
     new Main.ExecutionContextSelector(SDK.targetManager, UI.context);
     Bindings.blackboxManager = new Bindings.BlackboxManager(Bindings.debuggerWorkspaceBinding);
@@ -295,8 +286,11 @@ Main.Main = class {
   _initializeTarget() {
     Main.Main.time('Main._initializeTarget');
     SDK.targetManager.connectToMainTarget(webSocketConnectionLost);
+    InspectorFrontendHost.connectionReady();
 
+    // Used for browser tests.
     InspectorFrontendHost.readyForTest();
+
     // Asynchronously run the extensions.
     setTimeout(this._lateInitialization.bind(this), 100);
     Main.Main.timeEnd('Main._initializeTarget');
@@ -324,8 +318,10 @@ Main.Main = class {
     console.timeStamp('Main._lateInitialization');
     this._registerShortcuts();
     Extensions.extensionServer.initializeExtensions();
-    if (!Host.isUnderTest())
-      Help.showReleaseNoteIfNeeded();
+    if (Host.isUnderTest())
+      return;
+    for (var extension of self.runtime.extensions('late-initialization'))
+      extension.instance().then(instance => (/** @type {!Common.Runnable} */ (instance)).run());
   }
 
   _registerForwardedShortcuts() {
@@ -495,6 +491,7 @@ Main.Main.InspectorModel = class extends SDK.SDKModel {
     super(target);
     target.registerInspectorDispatcher(this);
     target.inspectorAgent().enable();
+    this._hideCrashedDialog = null;
   }
 
   /**
@@ -510,9 +507,23 @@ Main.Main.InspectorModel = class extends SDK.SDKModel {
    * @override
    */
   targetCrashed() {
-    var debuggerModel = this.target().model(SDK.DebuggerModel);
-    if (debuggerModel)
-      Main.TargetCrashedScreen.show(debuggerModel);
+    var dialog = new UI.Dialog();
+    dialog.setSizeBehavior(UI.GlassPane.SizeBehavior.MeasureContent);
+    dialog.addCloseButton();
+    dialog.setDimmed(true);
+    this._hideCrashedDialog = dialog.hide.bind(dialog);
+    new Main.TargetCrashedScreen(() => this._hideCrashedDialog = null).show(dialog.contentElement);
+    dialog.show();
+  }
+
+  /**
+   * @override;
+   */
+  targetReloadedAfterCrash() {
+    if (this._hideCrashedDialog) {
+      this._hideCrashedDialog.call(null);
+      this._hideCrashedDialog = null;
+    }
   }
 };
 
@@ -661,8 +672,7 @@ Main.Main.MainMenuItem = class {
       dockItemToolbar.appendToolbarItem(left);
       dockItemToolbar.appendToolbarItem(bottom);
       dockItemToolbar.appendToolbarItem(right);
-      contextMenu.appendCustomItem(dockItemElement);
-      contextMenu.appendSeparator();
+      contextMenu.headerSection().appendCustomItem(dockItemElement);
     }
 
     /**
@@ -673,11 +683,12 @@ Main.Main.MainMenuItem = class {
       contextMenu.discard();
     }
 
-    contextMenu.appendAction(
-        'main.toggle-drawer', UI.inspectorView.drawerVisible() ? Common.UIString('Hide console drawer') :
-                                                                 Common.UIString('Show console drawer'));
+    contextMenu.defaultSection().appendAction(
+        'main.toggle-drawer',
+        UI.inspectorView.drawerVisible() ? Common.UIString('Hide console drawer') :
+                                           Common.UIString('Show console drawer'));
     contextMenu.appendItemsAtLocation('mainMenu');
-    var moreTools = contextMenu.namedSubMenu('mainMenuMoreTools');
+    var moreTools = contextMenu.defaultSection().appendSubMenuItem(Common.UIString('More tools'));
     var extensions = self.runtime.extensions('view', undefined, true);
     for (var extension of extensions) {
       var descriptor = extension.descriptor();
@@ -685,12 +696,12 @@ Main.Main.MainMenuItem = class {
         continue;
       if (descriptor['location'] !== 'drawer-view' && descriptor['location'] !== 'panel')
         continue;
-      moreTools.appendItem(extension.title(), UI.viewManager.showView.bind(UI.viewManager, descriptor['id']));
+      moreTools.defaultSection().appendItem(
+          extension.title(), UI.viewManager.showView.bind(UI.viewManager, descriptor['id']));
     }
 
-    var helpSubMenu = contextMenu.namedSubMenu('mainMenuHelp');
-    helpSubMenu.appendAction('settings.documentation');
-    helpSubMenu.appendItem('Release Notes', () => InspectorFrontendHost.openInNewTab(Help.latestReleaseNote().link));
+    var helpSubMenu = contextMenu.footerSection().appendSubMenuItem(Common.UIString('Help'));
+    helpSubMenu.appendItemsAtLocation('mainMenuHelp');
   }
 };
 
@@ -733,6 +744,7 @@ Main.NetworkPanelIndicator = class {
     var manager = SDK.multitargetNetworkManager;
     manager.addEventListener(SDK.MultitargetNetworkManager.Events.ConditionsChanged, updateVisibility);
     manager.addEventListener(SDK.MultitargetNetworkManager.Events.BlockedPatternsChanged, updateVisibility);
+    manager.addEventListener(SDK.MultitargetNetworkManager.Events.InterceptorsChanged, updateVisibility);
     updateVisibility();
 
     function updateVisibility() {
@@ -740,6 +752,9 @@ Main.NetworkPanelIndicator = class {
       if (manager.isThrottling()) {
         icon = UI.Icon.create('smallicon-warning');
         icon.title = Common.UIString('Network throttling is enabled');
+      } else if (SDK.multitargetNetworkManager.isIntercepting()) {
+        icon = UI.Icon.create('smallicon-warning');
+        icon.title = Common.UIString('Requests may be rewritten');
       } else if (manager.isBlocking()) {
         icon = UI.Icon.create('smallicon-warning');
         icon.title = Common.UIString('Requests may be blocked');
@@ -875,25 +890,6 @@ Main.TargetCrashedScreen = class extends UI.VBox {
   }
 
   /**
-   * @param {!SDK.DebuggerModel} debuggerModel
-   */
-  static show(debuggerModel) {
-    var dialog = new UI.Dialog();
-    dialog.setSizeBehavior(UI.GlassPane.SizeBehavior.MeasureContent);
-    dialog.addCloseButton();
-    dialog.setDimmed(true);
-    var hideBound = dialog.hide.bind(dialog);
-    debuggerModel.addEventListener(SDK.DebuggerModel.Events.GlobalObjectCleared, hideBound);
-
-    new Main.TargetCrashedScreen(onHide).show(dialog.contentElement);
-    dialog.show();
-
-    function onHide() {
-      debuggerModel.removeEventListener(SDK.DebuggerModel.Events.GlobalObjectCleared, hideBound);
-    }
-  }
-
-  /**
    * @override
    */
   willHide() {
@@ -909,7 +905,8 @@ Main.TargetCrashedScreen = class extends UI.VBox {
 Main.BackendSettingsSync = class {
   constructor() {
     this._autoAttachSetting = Common.settings.moduleSetting('autoAttachToCreatedPages');
-    this._autoAttachSetting.addChangeListener(this._update, this);
+    this._autoAttachSetting.addChangeListener(this._updateAutoAttach, this);
+    this._updateAutoAttach();
 
     this._adBlockEnabledSetting = Common.settings.moduleSetting('network.adBlockingEnabled');
     this._adBlockEnabledSetting.addChangeListener(this._update, this);
@@ -921,8 +918,11 @@ Main.BackendSettingsSync = class {
    * @param {!SDK.Target} target
    */
   _updateTarget(target) {
-    target.pageAgent().setAutoAttachToCreatedPages(this._autoAttachSetting.get());
     target.pageAgent().setAdBlockingEnabled(this._adBlockEnabledSetting.get());
+  }
+
+  _updateAutoAttach() {
+    InspectorFrontendHost.setOpenNewWindowForPopups(this._autoAttachSetting.get());
   }
 
   _update() {

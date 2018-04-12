@@ -9,6 +9,17 @@
             "className": "Timeline.TimelinePanel"
         },
         {
+            "type": "view",
+            "location": "drawer-view",
+            "id": "performance.monitor",
+            "title": "Performance monitor",
+            "persistence": "closeable",
+            "order": 100,
+            "className": "Timeline.PerformanceMonitor",
+            "experiment": "performanceMonitor",
+            "tags": "performance, system monitor, monitor, activity, metrics"
+        },
+        {
             "type": "setting",
             "category": "Performance",
             "title": "Hide chrome frame in Layers view",
@@ -24,15 +35,17 @@
         {
             "type": "context-menu-item",
             "location": "timelineMenu/open",
-            "actionId": "timeline.load-from-file"
+            "actionId": "timeline.load-from-file",
+            "order": 10
         },
         {
             "type": "context-menu-item",
             "location": "timelineMenu/open",
-            "actionId": "timeline.save-to-file"
+            "actionId": "timeline.save-to-file",
+            "order": 15
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "timeline.toggle-recording",
             "iconClass": "largeicon-start-recording",
             "toggledIconClass": "largeicon-stop-recording",
@@ -63,7 +76,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "timeline.record-reload",
             "iconClass": "largeicon-refresh",
             "contextTypes": [
@@ -84,7 +97,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "category": "Timeline",
             "actionId": "timeline.save-to-file",
             "contextTypes": [
@@ -104,13 +117,12 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "category": "Timeline",
             "actionId": "timeline.load-from-file",
             "contextTypes": [
                 "Timeline.TimelinePanel"
             ],
-            "order": 10,
             "className": "Timeline.TimelinePanel.ActionDelegate",
             "title": "Load profile\u2026",
             "bindings": [
@@ -125,7 +137,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "timeline.jump-to-previous-frame",
             "contextTypes": [
                 "Timeline.TimelinePanel"
@@ -138,7 +150,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "timeline.jump-to-next-frame",
             "contextTypes": [
                 "Timeline.TimelinePanel"
@@ -151,7 +163,7 @@
             ]
         },
         {
-            "type": "@UI.ActionDelegate",
+            "type": "action",
             "actionId": "timeline.show-history",
             "className": "Timeline.TimelinePanel.ActionDelegate",
             "category": "Performance",
@@ -180,10 +192,10 @@
         "extensions",
         "data_grid",
         "product_registry",
-        "mobile_throttling",
-        "network_priorities"
+        "mobile_throttling"
     ],
     "scripts": [
+        "PerformanceMonitor.js",
         "CountersGraph.js",
         "ExtensionTracingSession.js",
         "PerformanceModel.js",
@@ -205,6 +217,7 @@
         "TimelinePanel.js"
     ],
     "resources": [
+        "performanceMonitor.css",
         "historyToolbarButton.css",
         "invalidationsTree.css",
         "timelineFlamechartPopover.css",

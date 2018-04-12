@@ -785,6 +785,9 @@ Runtime.Module = class {
       'object_ui': 'ObjectUI',
       'perf_ui': 'PerfUI',
       'har_importer': 'HARImporter',
+      'sass_test_runner': 'SASSTestRunner',
+      'sdk_test_runner': 'SDKTestRunner',
+      'cpu_profiler_test_runner': 'CPUProfilerTestRunner'
     };
     var namespace = specialCases[this._name] || this._name.split('_').map(a => a.substring(0, 1).toUpperCase() + a.substring(1)).join('');
     self[namespace] = self[namespace] || {};
@@ -886,6 +889,13 @@ Runtime.Extension = class {
    */
   instance() {
     return this._module._loadPromise().then(this._createInstance.bind(this));
+  }
+
+  /**
+   * @return {boolean}
+   */
+  canInstantiate() {
+    return !!(this._className || this._factoryName);
   }
 
   /**
@@ -1095,35 +1105,34 @@ window.runtimeInit = function() {
       Runtime._queryParamsObject['experiments'] = true;
     })();
   }
-  
-  // This must be constructed after the query parameters have been parsed.
-  Runtime.experiments = new Runtime.ExperimentsSupport();
-  
-  /**
-   * @type {?string}
-   */
-  Runtime._remoteBase = Runtime.queryParam('remoteBase');
-  {
-    (function validateRemoteBase() {
-      var remoteBaseRegexp = /^https:\/\/chrome-devtools-frontend\.appspot\.com\/serve_file\/@[0-9a-zA-Z]+\/?$/;
-      if (Runtime._remoteBase && !remoteBaseRegexp.test(Runtime._remoteBase))
-        Runtime._remoteBase = null;
-    })();
+
+// This must be constructed after the query parameters have been parsed.
+Runtime.experiments = new Runtime.ExperimentsSupport();
+
+/**
+ * @type {?string}
+ */
+Runtime._remoteBase;
+(function validateRemoteBase() {
+  if (location.href.startsWith('chrome-devtools://devtools/bundled/') && Runtime.queryParam('remoteBase')) {
+    var versionMatch = /\/serve_file\/(@[0-9a-zA-Z]+)\/?$/.exec(Runtime.queryParam('remoteBase'));
+    if (versionMatch)
+      Runtime._remoteBase = `${location.origin}/remote/serve_file/${versionMatch[1]}/`;
   }
-  
-  
+})();
+
+/**
+ * @interface
+ */
+function ServicePort() {
+}
+
+ServicePort.prototype = {
   /**
-   * @interface
+   * @param {function(string)} messageHandler
+   * @param {function(string)} closeHandler
    */
-  function ServicePort() {
-  }
-  
-  ServicePort.prototype = {
-    /**
-     * @param {function(string)} messageHandler
-     * @param {function(string)} closeHandler
-     */
-    setHandlers(messageHandler, closeHandler) {},
+  setHandlers(messageHandler, closeHandler) {},
   
     /**
      * @param {string} message

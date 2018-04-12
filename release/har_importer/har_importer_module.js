@@ -17,13 +17,14 @@ pageLoad.bindRequest(request);requests.push(request);}
 return requests;}
 static _buildPageLoad(page,mainRequest){var pageLoad=new NetworkLog.PageLoad(mainRequest);pageLoad.startTime=page.startedDateTime;pageLoad.contentLoadTime=page.pageTimings.onContentLoad*1000;pageLoad.loadTime=page.pageTimings.onLoad*1000;return pageLoad;}
 static _fillRequestFromHAREntry(request,entry,pageLoad){if(entry.request.postData)
-request.requestFormData=entry.request.postData.text;request.connectionId=entry.connection||'';request.requestMethod=entry.request.method;request.setRequestHeaders(entry.request.headers);if(entry.response.content.mimeType&&entry.response.content.mimeType!=='x-unknown')
+request.setRequestFormData(true,entry.request.postData.text);else
+request.setRequestFormData(false,null);request.connectionId=entry.connection||'';request.requestMethod=entry.request.method;request.setRequestHeaders(entry.request.headers);if(entry.response.content.mimeType&&entry.response.content.mimeType!=='x-unknown')
 request.mimeType=entry.response.content.mimeType;request.responseHeaders=entry.response.headers;request.statusCode=entry.response.status;request.statusText=entry.response.statusText;var protocol=entry.response.httpVersion.toLowerCase();if(protocol==='http/2.0')
 protocol='h2';request.protocol=protocol.replace(/^http\/2\.0?\+quic/,'http/2+quic');var issueTime=entry.startedDateTime.getTime()/1000;request.setIssueTime(issueTime,issueTime);var contentSize=entry.response.content.size>0?entry.response.content.size:0;var headersSize=entry.response.headersSize>0?entry.response.headersSize:0;var bodySize=entry.response.bodySize>0?entry.response.bodySize:0;request.resourceSize=contentSize||(headersSize+bodySize);var transferSize=entry.response.customAsNumber('transferSize');if(transferSize===undefined)
 transferSize=entry.response.headersSize+entry.response.bodySize;request.setTransferSize(transferSize>=0?transferSize:0);var fromCache=entry.customAsString('fromCache');if(fromCache==='memory')
 request.setFromMemoryCache();else if(fromCache==='disk')
 request.setFromDiskCache();var contentData={error:null,content:null,encoded:entry.response.content.encoding==='base64'};if(entry.response.content.text!==undefined)
-contentData.content=entry.response.content.text;request.setContentData(contentData);HARImporter.Importer._setupTiming(request,issueTime,entry.time,entry.timings);request.setRemoteAddress(entry.serverIPAddress||'',80);var resourceType=(pageLoad&&pageLoad.mainRequest===request)?Common.resourceTypes.Document:Common.ResourceType.fromMimeType(entry.response.content.mimeType);if(!resourceType)
+contentData.content=entry.response.content.text;request.setContentDataProvider(async()=>contentData);HARImporter.Importer._setupTiming(request,issueTime,entry.time,entry.timings);request.setRemoteAddress(entry.serverIPAddress||'',80);var resourceType=(pageLoad&&pageLoad.mainRequest===request)?Common.resourceTypes.Document:Common.ResourceType.fromMimeType(entry.response.content.mimeType);if(!resourceType)
 resourceType=Common.ResourceType.fromURL(entry.request.url)||Common.resourceTypes.Other;request.setResourceType(resourceType);request.finished=true;}
 static _setupTiming(request,issueTime,entryTotalDuration,timings){function accumulateTime(timing){if(timing===undefined||timing<0)
 return-1;lastEntry+=timing;return lastEntry;}

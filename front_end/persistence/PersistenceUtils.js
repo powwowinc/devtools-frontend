@@ -23,12 +23,13 @@ Persistence.PersistenceUtils = class {
    * @return {?UI.Icon}
    */
   static iconForUISourceCode(uiSourceCode) {
-    if (!Runtime.experiments.isEnabled('persistence2'))
-      return null;
     var binding = Persistence.persistence.binding(uiSourceCode);
     if (binding) {
       var icon = UI.Icon.create('mediumicon-file-sync');
       icon.title = Persistence.PersistenceUtils.tooltipForUISourceCode(binding.fileSystem);
+      // TODO(allada) This will not work properly with dark theme.
+      if (Persistence.networkPersistenceManager.project() === binding.fileSystem.project())
+        icon.style.filter = 'hue-rotate(160deg)';
       return icon;
     }
     if (uiSourceCode.project().type() !== Workspace.projectTypes.FileSystem)

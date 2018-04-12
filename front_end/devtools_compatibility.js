@@ -147,14 +147,6 @@
     }
 
     /**
-     * @param {number} callId
-     * @param {string} script
-     */
-    evaluateForTestInFrontend(callId, script) {
-      this._dispatchOnInspectorFrontendAPI('evaluateForTestInFrontend', [callId, script]);
-    }
-
-    /**
      * @param {!{r: number, g: number, b: number, a: number}} color
      */
     eyeDropperPickedColor(color) {
@@ -176,10 +168,11 @@
     }
 
     /**
-     * @param {!{fileSystemName: string, rootURL: string, fileSystemPath: string}} fileSystem
+     * @param {?string} error
+     * @param {?{type: string, fileSystemName: string, rootURL: string, fileSystemPath: string}} fileSystem
      */
-    fileSystemAdded(fileSystem) {
-      this._dispatchOnInspectorFrontendAPI('fileSystemAdded', ['', fileSystem]);
+    fileSystemAdded(error, fileSystem) {
+      this._dispatchOnInspectorFrontendAPI('fileSystemAdded', [error, fileSystem]);
     }
 
     /**
@@ -250,9 +243,10 @@
 
     /**
      * @param {string} url
+     * @param {string=} fileSystemPath
      */
-    savedURL(url) {
-      this._dispatchOnInspectorFrontendAPI('savedURL', [url]);
+    savedURL(url, fileSystemPath) {
+      this._dispatchOnInspectorFrontendAPI('savedURL', [url, fileSystemPath]);
     }
 
     /**
@@ -339,6 +333,22 @@
      */
     getSelectionForegroundColor() {
       return DevToolsHost.getSelectionForegroundColor();
+    }
+
+    /**
+     * @override
+     * @return {string}
+     */
+    getInactiveSelectionBackgroundColor() {
+      return DevToolsHost.getInactiveSelectionBackgroundColor();
+    }
+
+    /**
+     * @override
+     * @return {string}
+     */
+    getInactiveSelectionForegroundColor() {
+      return DevToolsHost.getInactiveSelectionForegroundColor();
     }
 
     /**
@@ -480,6 +490,14 @@
 
     /**
      * @override
+     * @param {string} fileSystemPath
+     */
+    showItemInFolder(fileSystemPath) {
+      DevToolsAPI.sendMessageToEmbedder('showItemInFolder', [fileSystemPath], null);
+    }
+
+    /**
+     * @override
      * @param {string} url
      * @param {string} content
      * @param {boolean} forceSaveAs
@@ -527,10 +545,10 @@
 
     /**
      * @override
-     * @param {string=} fileSystemPath
+     * @param {string=} type
      */
-    addFileSystem(fileSystemPath) {
-      DevToolsAPI.sendMessageToEmbedder('addFileSystem', [fileSystemPath || ''], null);
+    addFileSystem(type) {
+      DevToolsAPI.sendMessageToEmbedder('addFileSystem', [type || ''], null);
     }
 
     /**
@@ -641,14 +659,6 @@
 
     /**
      * @override
-     * @return {boolean}
-     */
-    isUnderTest() {
-      return DevToolsHost.isUnderTest();
-    }
-
-    /**
-     * @override
      * @param {function()} callback
      */
     reattach(callback) {
@@ -660,6 +670,21 @@
      */
     readyForTest() {
       DevToolsAPI.sendMessageToEmbedder('readyForTest', [], null);
+    }
+
+    /**
+     * @override
+     */
+    connectionReady() {
+      DevToolsAPI.sendMessageToEmbedder('connectionReady', [], null);
+    }
+
+    /**
+     * @override
+     * @param {boolean} value
+     */
+    setOpenNewWindowForPopups(value) {
+      DevToolsAPI.sendMessageToEmbedder('setOpenNewWindowForPopups', [value], null);
     }
 
     /**
@@ -729,6 +754,14 @@
     }
 
     // Backward-compatible methods below this line --------------------------------------------
+
+    /**
+     * Support for legacy front-ends (<M65).
+     * @return {boolean}
+     */
+    isUnderTest() {
+      return false;
+    }
 
     /**
      * Support for legacy front-ends (<M50).
@@ -1177,6 +1210,25 @@
   function installBackwardsCompatibility() {
     if (window.location.search.indexOf('remoteFrontend') === -1)
       return;
+
+    // Support for legacy (<M65) frontends.
+    /** @type {(!function(number, number):Element|undefined)} */
+    ShadowRoot.prototype.__originalShadowRootElementFromPoint;
+
+    if (!ShadowRoot.prototype.__originalShadowRootElementFromPoint) {
+      ShadowRoot.prototype.__originalShadowRootElementFromPoint = ShadowRoot.prototype.elementFromPoint;
+      /**
+       *  @param {number} x
+       *  @param {number} y
+       *  @return {Element}
+       */
+      ShadowRoot.prototype.elementFromPoint = function(x, y) {
+        var originalResult = ShadowRoot.prototype.__originalShadowRootElementFromPoint.apply(this, arguments);
+        if (this.host && originalResult === this.host)
+          return null;
+        return originalResult;
+      };
+    }
 
     // Support for legacy (<M53) frontends.
     if (!window.KeyboardEvent.prototype.hasOwnProperty('keyIdentifier')) {

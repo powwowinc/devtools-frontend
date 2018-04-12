@@ -104,6 +104,16 @@ SDK.ScreenCaptureModel = class extends SDK.SDKModel {
   /**
    * @override
    * @param {!Protocol.Page.FrameId} frameId
+   * @param {!Protocol.Network.LoaderId} loaderId
+   * @param {string} name
+   * @param {number} time
+   */
+  lifecycleEvent(frameId, loaderId, name, time) {
+  }
+
+  /**
+   * @override
+   * @param {!Protocol.Page.FrameId} frameId
    * @param {!Protocol.Page.FrameId} parentFrameId
    */
   frameAttached(frameId, parentFrameId) {
@@ -186,6 +196,16 @@ SDK.ScreenCaptureModel = class extends SDK.SDKModel {
    * @override
    */
   interstitialHidden() {
+  }
+
+  /**
+   * @override
+   * @param {string} url
+   * @param {string} windowName
+   * @param {!Array<string>} windowFeatures
+   * @param {boolean} userGesture
+   */
+  windowOpen(url, windowName, windowFeatures, userGesture) {
   }
 };
 

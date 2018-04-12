@@ -324,6 +324,7 @@ Network.NetworkLogViewColumns = class {
     }
     this._networkLogView.element.classList.toggle('brief-mode', !gridMode);
     this._updateColumns();
+    this._updateRowsSize();
   }
 
   /**
@@ -379,40 +380,35 @@ Network.NetworkLogViewColumns = class {
     var columnConfigs = this._columns.filter(columnConfig => columnConfig.hideable);
     var nonResponseHeaders = columnConfigs.filter(columnConfig => !columnConfig.isResponseHeader);
     for (var columnConfig of nonResponseHeaders) {
-      contextMenu.appendCheckboxItem(
+      contextMenu.headerSection().appendCheckboxItem(
           columnConfig.title, this._toggleColumnVisibility.bind(this, columnConfig), columnConfig.visible);
     }
 
-    contextMenu.appendSeparator();
-
-    var responseSubMenu = contextMenu.appendSubMenuItem(Common.UIString('Response Headers'));
+    var responseSubMenu = contextMenu.footerSection().appendSubMenuItem(Common.UIString('Response Headers'));
     var responseHeaders = columnConfigs.filter(columnConfig => columnConfig.isResponseHeader);
     for (var columnConfig of responseHeaders) {
-      responseSubMenu.appendCheckboxItem(
+      responseSubMenu.defaultSection().appendCheckboxItem(
           columnConfig.title, this._toggleColumnVisibility.bind(this, columnConfig), columnConfig.visible);
     }
 
-    responseSubMenu.appendSeparator();
-    responseSubMenu.appendItem(
+    responseSubMenu.footerSection().appendItem(
         Common.UIString('Manage Header Columns\u2026'), this._manageCustomHeaderDialog.bind(this));
 
-    contextMenu.appendSeparator();
-
     var waterfallSortIds = Network.NetworkLogViewColumns.WaterfallSortIds;
-    var waterfallSubMenu = contextMenu.appendSubMenuItem(Common.UIString('Waterfall'));
-    waterfallSubMenu.appendCheckboxItem(
+    var waterfallSubMenu = contextMenu.footerSection().appendSubMenuItem(Common.UIString('Waterfall'));
+    waterfallSubMenu.defaultSection().appendCheckboxItem(
         Common.UIString('Start Time'), setWaterfallMode.bind(this, waterfallSortIds.StartTime),
         this._activeWaterfallSortId === waterfallSortIds.StartTime);
-    waterfallSubMenu.appendCheckboxItem(
+    waterfallSubMenu.defaultSection().appendCheckboxItem(
         Common.UIString('Response Time'), setWaterfallMode.bind(this, waterfallSortIds.ResponseTime),
         this._activeWaterfallSortId === waterfallSortIds.ResponseTime);
-    waterfallSubMenu.appendCheckboxItem(
+    waterfallSubMenu.defaultSection().appendCheckboxItem(
         Common.UIString('End Time'), setWaterfallMode.bind(this, waterfallSortIds.EndTime),
         this._activeWaterfallSortId === waterfallSortIds.EndTime);
-    waterfallSubMenu.appendCheckboxItem(
+    waterfallSubMenu.defaultSection().appendCheckboxItem(
         Common.UIString('Total Duration'), setWaterfallMode.bind(this, waterfallSortIds.Duration),
         this._activeWaterfallSortId === waterfallSortIds.Duration);
-    waterfallSubMenu.appendCheckboxItem(
+    waterfallSubMenu.defaultSection().appendCheckboxItem(
         Common.UIString('Latency'), setWaterfallMode.bind(this, waterfallSortIds.Latency),
         this._activeWaterfallSortId === waterfallSortIds.Latency);
 
@@ -544,7 +540,8 @@ Network.NetworkLogViewColumns = class {
       show: popover => {
         var manager = anchor.request ? SDK.NetworkManager.forRequest(anchor.request) : null;
         var content = Components.DOMPresentationUtils.buildStackTracePreviewContents(
-            manager ? manager.target() : null, this._popupLinkifier, initiator.stack);
+            manager ? manager.target() : null, this._popupLinkifier, initiator.stack,
+            () => popover.setSizeBehavior(UI.GlassPane.SizeBehavior.MeasureContent));
         popover.contentElement.appendChild(content);
         return Promise.resolve(true);
       },
@@ -730,11 +727,7 @@ Network.NetworkLogViewColumns._defaultColumns = [
     align: DataGrid.DataGrid.Align.Right,
     sortingFunction: Network.NetworkRequestNode.RequestPropertyComparator.bind(null, 'duration')
   },
-  {
-    id: 'priority',
-    title: Common.UIString('Priority'),
-    sortingFunction: Network.NetworkRequestNode.InitialPriorityComparator
-  },
+  {id: 'priority', title: Common.UIString('Priority'), sortingFunction: Network.NetworkRequestNode.PriorityComparator},
   {
     id: 'connectionid',
     title: Common.UIString('Connection ID'),

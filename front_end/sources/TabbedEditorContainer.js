@@ -240,6 +240,8 @@ Sources.TabbedEditorContainer = class extends Common.Object {
     var range = /** @type {!TextUtils.TextRange} */ (event.data);
     this._history.updateSelectionRange(this._currentFile.url(), range);
     this._history.save(this._previouslyViewedFilesSetting);
+
+    Extensions.extensionServer.sourceSelectionChanged(this._currentFile.url(), range);
   }
 
   /**
@@ -281,7 +283,7 @@ Sources.TabbedEditorContainer = class extends Common.Object {
   _titleForFile(uiSourceCode) {
     var maxDisplayNameLength = 30;
     var title = uiSourceCode.displayName(true).trimMiddle(maxDisplayNameLength);
-    if (uiSourceCode.isDirty() || Persistence.persistence.hasUnsavedCommittedChanges(uiSourceCode))
+    if (uiSourceCode.isDirty())
       title += '*';
     return title;
   }

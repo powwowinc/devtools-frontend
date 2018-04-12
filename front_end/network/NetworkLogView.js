@@ -116,7 +116,7 @@ Network.NetworkLogView = class extends UI.VBox {
     /** @type {?Network.GroupLookupInterface} */
     this._activeGroupLookup = null;
 
-    this._textFilterUI = new UI.TextFilterUI(true);
+    this._textFilterUI = new UI.TextFilterUI();
     this._textFilterUI.addEventListener(UI.FilterUI.Events.FilterChanged, this._filterChanged, this);
     filterBar.addFilter(this._textFilterUI);
 
@@ -132,7 +132,9 @@ Network.NetworkLogView = class extends UI.VBox {
         UI.FilterUI.Events.FilterChanged, this._filterChanged.bind(this), this);
     filterBar.addFilter(this._resourceCategoryFilterUI);
 
-    this._suggestionBuilder = new Network.FilterSuggestionBuilder(Network.NetworkLogView._searchKeys);
+    this._filterParser = new TextUtils.FilterParser(Network.NetworkLogView._searchKeys);
+    this._suggestionBuilder =
+        new UI.FilterSuggestionBuilder(Network.NetworkLogView._searchKeys, Network.NetworkLogView._sortSearchValues);
     this._resetSuggestionBuilder();
 
     this._dataGrid = this._columns.dataGrid();
@@ -142,7 +144,7 @@ Network.NetworkLogView = class extends UI.VBox {
     this._summaryBarElement = this.element.createChild('div', 'network-summary-bar');
 
     new UI.DropTarget(
-        this.element, [UI.DropTarget.Types.Files], Common.UIString('Drop HAR files here'), this._handleDrop.bind(this));
+        this.element, [UI.DropTarget.Type.File], Common.UIString('Drop HAR files here'), this._handleDrop.bind(this));
 
     Common.moduleSetting('networkColorCodeResourceTypes')
         .addChangeListener(this._invalidateAllItems.bind(this, false), this);
@@ -159,6 +161,22 @@ Network.NetworkLogView = class extends UI.VBox {
   _updateGroupByFrame() {
     var value = Common.moduleSetting('network.group-by-frame').get();
     this._setGrouping(value ? 'Frame' : null);
+  }
+
+  /**
+   * @param {string} key
+   * @param {!Array<string>} values
+   */
+  static _sortSearchValues(key, values) {
+    if (key === Network.NetworkLogView.FilterType.Priority) {
+      values.sort((a, b) => {
+        var aPriority = /** @type {!Protocol.Network.ResourcePriority} */ (PerfUI.uiLabelToNetworkPriority(a));
+        var bPriority = /** @type {!Protocol.Network.ResourcePriority} */ (PerfUI.uiLabelToNetworkPriority(b));
+        return PerfUI.networkPriorityWeight(aPriority) - PerfUI.networkPriorityWeight(bPriority);
+      });
+    } else {
+      values.sort();
+    }
   }
 
   /**
@@ -261,7 +279,7 @@ Network.NetworkLogView = class extends UI.VBox {
    * @return {boolean}
    */
   static _requestPriorityFilter(value, request) {
-    return request.initialPriority() === value;
+    return request.priority() === value;
   }
 
   /**
@@ -474,7 +492,7 @@ Network.NetworkLogView = class extends UI.VBox {
    * @return {number}
    */
   _computeRowHeight() {
-    return Math.floor(this._rawRowHeight * window.devicePixelRatio) / window.devicePixelRatio;
+    return Math.round(this._rawRowHeight * window.devicePixelRatio) / window.devicePixelRatio;
   }
 
   /**
@@ -552,6 +570,7 @@ Network.NetworkLogView = class extends UI.VBox {
   }
 
   _resetSuggestionBuilder() {
+    this._suggestionBuilder.clear();
     this._suggestionBuilder.addItem(Network.NetworkLogView.FilterType.Is, Network.NetworkLogView.IsFilterType.Running);
     this._suggestionBuilder.addItem(
         Network.NetworkLogView.FilterType.Is, Network.NetworkLogView.IsFilterType.FromCache);
@@ -688,7 +707,7 @@ Network.NetworkLogView = class extends UI.VBox {
       // TODO(allada) inspectedURL should be stored in PageLoad used instead of target so HAR requests can have an
       // inspected url.
       if (networkManager && request.url() === networkManager.target().inspectedURL() &&
-          request.resourceType() === Common.resourceTypes.Document)
+          request.resourceType() === Common.resourceTypes.Document && !networkManager.target().parentTarget())
         baseTime = request.startTime;
       if (request.endTime > maxTime)
         maxTime = request.endTime;
@@ -1024,7 +1043,6 @@ Network.NetworkLogView = class extends UI.VBox {
    */
   setTextFilterValue(filterString) {
     this._textFilterUI.setValue(filterString);
-    this._textFilterUI.setRegexChecked(false);
     this._dataURLFilterUI.setChecked(false);
     this._resourceCategoryFilterUI.reset();
   }
@@ -1063,10 +1081,10 @@ Network.NetworkLogView = class extends UI.VBox {
     this._suggestionBuilder.addItem(Network.NetworkLogView.FilterType.Scheme, '' + request.scheme);
     this._suggestionBuilder.addItem(Network.NetworkLogView.FilterType.StatusCode, '' + request.statusCode);
 
-    var priority = request.initialPriority();
+    var priority = request.priority();
     if (priority) {
       this._suggestionBuilder.addItem(
-          Network.NetworkLogView.FilterType.Priority, NetworkPriorities.uiLabelForPriority(priority));
+          Network.NetworkLogView.FilterType.Priority, PerfUI.uiLabelForNetworkPriority(priority));
     }
 
     if (request.mixedContentType !== Protocol.Security.MixedContentType.None) {
@@ -1120,74 +1138,80 @@ Network.NetworkLogView = class extends UI.VBox {
    */
   handleContextMenuForRequest(contextMenu, request) {
     contextMenu.appendApplicableItems(request);
-    var copyMenu = contextMenu.appendSubMenuItem(Common.UIString('Copy'));
+    var copyMenu = contextMenu.clipboardSection().appendSubMenuItem(Common.UIString('Copy'));
+    var footerSection = copyMenu.footerSection();
     if (request) {
-      copyMenu.appendItem(
+      copyMenu.defaultSection().appendItem(
           UI.copyLinkAddressLabel(), InspectorFrontendHost.copyText.bind(InspectorFrontendHost, request.contentURL()));
-      copyMenu.appendSeparator();
-
       if (request.requestHeadersText()) {
-        copyMenu.appendItem(
+        copyMenu.defaultSection().appendItem(
             Common.UIString('Copy request headers'), Network.NetworkLogView._copyRequestHeaders.bind(null, request));
       }
 
       if (request.responseHeadersText) {
-        copyMenu.appendItem(
+        copyMenu.defaultSection().appendItem(
             Common.UIString('Copy response headers'), Network.NetworkLogView._copyResponseHeaders.bind(null, request));
       }
 
-      if (request.finished)
-        copyMenu.appendItem(Common.UIString('Copy response'), Network.NetworkLogView._copyResponse.bind(null, request));
+      if (request.finished) {
+        copyMenu.defaultSection().appendItem(
+            Common.UIString('Copy response'), Network.NetworkLogView._copyResponse.bind(null, request));
+      }
 
       if (Host.isWin()) {
-        copyMenu.appendItem(Common.UIString('Copy as cURL (cmd)'), this._copyCurlCommand.bind(this, request, 'win'));
-        copyMenu.appendItem(Common.UIString('Copy as cURL (bash)'), this._copyCurlCommand.bind(this, request, 'unix'));
-        copyMenu.appendItem(Common.UIString('Copy All as cURL (cmd)'), this._copyAllCurlCommand.bind(this, 'win'));
-        copyMenu.appendItem(Common.UIString('Copy All as cURL (bash)'), this._copyAllCurlCommand.bind(this, 'unix'));
+        footerSection.appendItem(
+            Common.UIString('Copy as PowerShell'), this._copyPowerShellCommand.bind(this, request));
+        footerSection.appendItem(
+            Common.UIString('Copy as cURL (cmd)'), this._copyCurlCommand.bind(this, request, 'win'));
+        footerSection.appendItem(
+            Common.UIString('Copy as cURL (bash)'), this._copyCurlCommand.bind(this, request, 'unix'));
+        footerSection.appendItem(Common.UIString('Copy all as PowerShell'), this._copyAllPowerShellCommand.bind(this));
+        footerSection.appendItem(Common.UIString('Copy all as cURL (cmd)'), this._copyAllCurlCommand.bind(this, 'win'));
+        footerSection.appendItem(
+            Common.UIString('Copy all as cURL (bash)'), this._copyAllCurlCommand.bind(this, 'unix'));
       } else {
-        copyMenu.appendItem(Common.UIString('Copy as cURL'), this._copyCurlCommand.bind(this, request, 'unix'));
-        copyMenu.appendItem(Common.UIString('Copy All as cURL'), this._copyAllCurlCommand.bind(this, 'unix'));
+        footerSection.appendItem(Common.UIString('Copy as cURL'), this._copyCurlCommand.bind(this, request, 'unix'));
+        footerSection.appendItem(Common.UIString('Copy all as cURL'), this._copyAllCurlCommand.bind(this, 'unix'));
       }
     } else {
-      copyMenu = contextMenu.appendSubMenuItem(Common.UIString('Copy'));
+      copyMenu = contextMenu.clipboardSection().appendSubMenuItem(Common.UIString('Copy'));
     }
-    copyMenu.appendItem(Common.UIString('Copy all as HAR'), this._copyAll.bind(this));
+    footerSection.appendItem(Common.UIString('Copy all as HAR'), this._copyAll.bind(this));
 
-    contextMenu.appendSeparator();
-    contextMenu.appendItem(Common.UIString('Save as HAR with content'), this._exportAll.bind(this));
+    contextMenu.saveSection().appendItem(Common.UIString('Save as HAR with content'), this._exportAll.bind(this));
 
-    contextMenu.appendSeparator();
-    contextMenu.appendItem(Common.UIString('Clear browser cache'), this._clearBrowserCache.bind(this));
-    contextMenu.appendItem(Common.UIString('Clear browser cookies'), this._clearBrowserCookies.bind(this));
+    contextMenu.editSection().appendItem(Common.UIString('Clear browser cache'), this._clearBrowserCache.bind(this));
+    contextMenu.editSection().appendItem(
+        Common.UIString('Clear browser cookies'), this._clearBrowserCookies.bind(this));
 
     if (request) {
-      contextMenu.appendSeparator();
-
       const maxBlockedURLLength = 20;
       var manager = SDK.multitargetNetworkManager;
       var patterns = manager.blockedPatterns();
 
       var urlWithoutScheme = request.parsedURL.urlWithoutScheme();
       if (urlWithoutScheme && !patterns.find(pattern => pattern.url === urlWithoutScheme)) {
-        contextMenu.appendItem(Common.UIString('Block request URL'), addBlockedURL.bind(null, urlWithoutScheme));
+        contextMenu.debugSection().appendItem(
+            Common.UIString('Block request URL'), addBlockedURL.bind(null, urlWithoutScheme));
       } else if (urlWithoutScheme) {
         const croppedURL = urlWithoutScheme.trimMiddle(maxBlockedURLLength);
-        contextMenu.appendItem(
+        contextMenu.debugSection().appendItem(
             Common.UIString('Unblock %s', croppedURL), removeBlockedURL.bind(null, urlWithoutScheme));
       }
 
       var domain = request.parsedURL.domain();
       if (domain && !patterns.find(pattern => pattern.url === domain)) {
-        contextMenu.appendItem(Common.UIString('Block request domain'), addBlockedURL.bind(null, domain));
+        contextMenu.debugSection().appendItem(
+            Common.UIString('Block request domain'), addBlockedURL.bind(null, domain));
       } else if (domain) {
         const croppedDomain = domain.trimMiddle(maxBlockedURLLength);
-        contextMenu.appendItem(Common.UIString('Unblock %s', croppedDomain), removeBlockedURL.bind(null, domain));
+        contextMenu.debugSection().appendItem(
+            Common.UIString('Unblock %s', croppedDomain), removeBlockedURL.bind(null, domain));
       }
 
       if (SDK.NetworkManager.canReplayRequest(request)) {
-        contextMenu.appendSeparator();
-        contextMenu.appendItem(Common.UIString('Replay XHR'), SDK.NetworkManager.replayRequest.bind(null, request));
-        contextMenu.appendSeparator();
+        contextMenu.debugSection().appendItem(
+            Common.UIString('Replay XHR'), SDK.NetworkManager.replayRequest.bind(null, request));
       }
 
       /**
@@ -1216,8 +1240,8 @@ Network.NetworkLogView = class extends UI.VBox {
     return httpRequests.filter(Network.NetworkLogView.FinishedRequestsFilter);
   }
 
-  _copyAll() {
-    var harArchive = {log: (new NetworkLog.HARLog(this._harRequests())).build()};
+  async _copyAll() {
+    var harArchive = {log: await NetworkLog.HARLog.build(this._harRequests())};
     InspectorFrontendHost.copyText(JSON.stringify(harArchive, null, 2));
   }
 
@@ -1225,22 +1249,35 @@ Network.NetworkLogView = class extends UI.VBox {
    * @param {!SDK.NetworkRequest} request
    * @param {string} platform
    */
-  _copyCurlCommand(request, platform) {
-    InspectorFrontendHost.copyText(this._generateCurlCommand(request, platform));
+  async _copyCurlCommand(request, platform) {
+    var command = await this._generateCurlCommand(request, platform);
+    InspectorFrontendHost.copyText(command);
   }
 
   /**
    * @param {string} platform
    */
-  _copyAllCurlCommand(platform) {
+  async _copyAllCurlCommand(platform) {
     var requests = NetworkLog.networkLog.requests();
-    var commands = [];
-    for (var request of requests)
-      commands.push(this._generateCurlCommand(request, platform));
+    var commands = await Promise.all(requests.map(request => this._generateCurlCommand(request, platform)));
     if (platform === 'win')
       InspectorFrontendHost.copyText(commands.join(' &\r\n'));
     else
       InspectorFrontendHost.copyText(commands.join(' ;\n'));
+  }
+
+  /**
+   * @param {!SDK.NetworkRequest} request
+   */
+  async _copyPowerShellCommand(request) {
+    var command = await this._generatePowerShellCommand(request);
+    InspectorFrontendHost.copyText(command);
+  }
+
+  async _copyAllPowerShellCommand() {
+    var requests = NetworkLog.networkLog.requests();
+    var commands = await Promise.all(requests.map(request => this._generatePowerShellCommand(request)));
+    InspectorFrontendHost.copyText(commands.join(';\r\n'));
   }
 
   async _exportAll() {
@@ -1430,57 +1467,23 @@ Network.NetworkLogView = class extends UI.VBox {
    * @param {string} query
    */
   _parseFilterQuery(query) {
-    var parsedQuery;
-    if (this._textFilterUI.isRegexChecked() && query !== '')
-      parsedQuery = {text: [query], filters: []};
-    else
-      parsedQuery = this._suggestionBuilder.parseQuery(query);
-
-    this._filters = parsedQuery.text.map(this._createTextFilter, this);
-
-    var n = parsedQuery.filters.length;
-    for (var i = 0; i < n; ++i) {
-      var filter = parsedQuery.filters[i];
-      var filterType = /** @type {!Network.NetworkLogView.FilterType} */ (filter.type.toLowerCase());
-      this._filters.push(this._createFilter(filterType, filter.data, filter.negative));
-    }
-  }
-
-  /**
-   * @param {string} text
-   * @return {!Network.NetworkLogView.Filter}
-   */
-  _createTextFilter(text) {
-    var negative = false;
-    /** @type {?RegExp} */
-    var regex;
-    if (!this._textFilterUI.isRegexChecked() && text[0] === '-' && text.length > 1) {
-      negative = true;
-      text = text.substring(1);
-      regex = new RegExp(text.escapeForRegExp(), 'i');
-    } else {
-      regex = this._textFilterUI.regex();
-    }
-
-    var filter = Network.NetworkLogView._requestPathFilter.bind(null, regex);
-    if (negative)
-      filter = Network.NetworkLogView._negativeFilter.bind(null, filter);
-    return filter;
-  }
-
-  /**
-   * @param {!Network.NetworkLogView.FilterType} type
-   * @param {string} value
-   * @param {boolean} negative
-   * @return {!Network.NetworkLogView.Filter}
-   */
-  _createFilter(type, value, negative) {
-    var filter = this._createSpecialFilter(type, value);
-    if (!filter)
-      return this._createTextFilter((negative ? '-' : '') + type + ':' + value);
-    if (negative)
-      return Network.NetworkLogView._negativeFilter.bind(null, filter);
-    return filter;
+    var descriptors = this._filterParser.parse(query);
+    this._filters = descriptors.map(descriptor => {
+      var key = descriptor.key;
+      var text = descriptor.text || '';
+      var regex = descriptor.regex;
+      var filter;
+      if (key) {
+        var defaultText = (key + ':' + text).escapeForRegExp();
+        filter = this._createSpecialFilter(/** @type {!Network.NetworkLogView.FilterType} */ (key), text) ||
+            Network.NetworkLogView._requestPathFilter.bind(null, new RegExp(defaultText, 'i'));
+      } else if (descriptor.regex) {
+        filter = Network.NetworkLogView._requestPathFilter.bind(null, /** @type {!RegExp} */ (regex));
+      } else {
+        filter = Network.NetworkLogView._requestPathFilter.bind(null, new RegExp(text.escapeForRegExp(), 'i'));
+      }
+      return descriptor.negative ? Network.NetworkLogView._negativeFilter.bind(null, filter) : filter;
+    });
   }
 
   /**
@@ -1529,7 +1532,7 @@ Network.NetworkLogView = class extends UI.VBox {
         return Network.NetworkLogView._requestSetCookieValueFilter.bind(null, value);
 
       case Network.NetworkLogView.FilterType.Priority:
-        return Network.NetworkLogView._requestPriorityFilter.bind(null, NetworkPriorities.uiLabelToPriority(value));
+        return Network.NetworkLogView._requestPriorityFilter.bind(null, PerfUI.uiLabelToNetworkPriority(value));
 
       case Network.NetworkLogView.FilterType.StatusCode:
         return Network.NetworkLogView._statusCodeFilter.bind(null, value);
@@ -1621,9 +1624,9 @@ Network.NetworkLogView = class extends UI.VBox {
   /**
    * @param {!SDK.NetworkRequest} request
    * @param {string} platform
-   * @return {string}
+   * @return {!Promise<string>}
    */
-  _generateCurlCommand(request, platform) {
+  async _generateCurlCommand(request, platform) {
     var command = ['curl'];
     // These headers are derived from URL (except "version") and would be added by cURL anyway.
     var ignoredHeaders = {'host': 1, 'method': 1, 'path': 1, 'scheme': 1, 'version': 1};
@@ -1709,15 +1712,15 @@ Network.NetworkLogView = class extends UI.VBox {
     var inferredMethod = 'GET';
     var data = [];
     var requestContentType = request.requestContentType();
-    if (requestContentType && requestContentType.startsWith('application/x-www-form-urlencoded') &&
-        request.requestFormData) {
+    var formData = await request.requestFormData();
+    if (requestContentType && requestContentType.startsWith('application/x-www-form-urlencoded') && formData) {
       data.push('--data');
-      data.push(escapeString(request.requestFormData));
+      data.push(escapeString(formData));
       ignoredHeaders['content-length'] = true;
       inferredMethod = 'POST';
-    } else if (request.requestFormData) {
+    } else if (formData) {
       data.push('--data-binary');
-      data.push(escapeString(request.requestFormData));
+      data.push(escapeString(formData));
       ignoredHeaders['content-length'] = true;
       inferredMethod = 'POST';
     }
@@ -1741,6 +1744,56 @@ Network.NetworkLogView = class extends UI.VBox {
 
     if (request.securityState() === Protocol.Security.SecurityState.Insecure)
       command.push('--insecure');
+    return command.join(' ');
+  }
+
+  /**
+   * @param {!SDK.NetworkRequest} request
+   * @return {!Promise<string>}
+   */
+  async _generatePowerShellCommand(request) {
+    var command = ['Invoke-WebRequest'];
+    var ignoredHeaders = new Set(['host', 'connection', 'proxy-connection', 'content-length', 'expect', 'range']);
+
+    /**
+     * @param {string} str
+     * @return {string}
+     */
+    function escapeString(str) {
+      return '"' +
+          str.replace(/[`\$"]/g, '`$&').replace(/[^\x20-\x7E]/g, char => '$([char]' + char.charCodeAt(0) + ')') + '"';
+    }
+
+    command.push('-Uri');
+    command.push(escapeString(request.url()));
+
+    if (request.requestMethod !== 'GET') {
+      command.push('-Method');
+      command.push(escapeString(request.requestMethod));
+    }
+
+    var requestHeaders = request.requestHeaders();
+    var headerNameValuePairs = [];
+    for (var header of requestHeaders) {
+      var name = header.name.replace(/^:/, '');  // Translate h2 headers to HTTP headers.
+      if (ignoredHeaders.has(name.toLowerCase()))
+        continue;
+      headerNameValuePairs.push(escapeString(name) + '=' + escapeString(header.value));
+    }
+    if (headerNameValuePairs.length) {
+      command.push('-Headers');
+      command.push('@{' + headerNameValuePairs.join('; ') + '}');
+    }
+    var formData = await request.requestFormData();
+    if (formData) {
+      command.push('-Body');
+      var body = escapeString(formData);
+      if (/[^\x20-\x7E]/.test(formData))
+        command.push('([System.Text.Encoding]::UTF8.GetBytes(' + body + '))');
+      else
+        command.push(body);
+    }
+
     return command.join(' ');
   }
 };
