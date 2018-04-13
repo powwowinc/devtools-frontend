@@ -195,7 +195,9 @@ UI.TabbedPane = class extends UI.VBox {
    * @param {number=} index
    */
   appendTab(id, tabTitle, view, tabTooltip, userGesture, isCloseable, index) {
+    /**************** POWWOW ADDED ****************/
     if (~['Performance', 'Memory', 'Audits'].indexOf(tabTitle)) return; //powwow - filter unwanted tabs
+    /**************** POWWOW ADDED ****************/
     isCloseable = typeof isCloseable === 'boolean' ? isCloseable : this._closeableTabs;
     var tab = new UI.TabbedPaneTab(this, id, tabTitle, isCloseable, view, tabTooltip);
     tab.setDelegate(this._delegate);

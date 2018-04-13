@@ -80,6 +80,7 @@ var Runtime = class {
     function load(fulfill, reject) {
       var xhr = new XMLHttpRequest();
 
+      /**************** POWWOW ADDED ****************/
       if (url.includes('http')) {
         var parts = url.split('/');
         parts.shift();
@@ -120,6 +121,7 @@ var Runtime = class {
           return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
       }
+      /**************** POWWOW ADDED ****************/
 
       xhr.open('GET', url, true);
       xhr.onreadystatechange = onreadystatechange;
@@ -307,7 +309,6 @@ var Runtime = class {
           moduleDescriptors[i].remote = configuration[i]['type'] === 'remote';
         }
         self.runtime = new Runtime(moduleDescriptors);
-
         if (coreModuleNames)
           return /** @type {!Promise<undefined>} */ (self.runtime._loadAutoStartModules(coreModuleNames));
         return Promise.resolve();
@@ -339,9 +340,14 @@ var Runtime = class {
    * @return {string}
    */
   static queryParamsString() {
-    var splitLocation = window.location.href.split('?');
+    /**************** POWWOW REMOVED ****************/
+    // return location.search;
+    /**************** POWWOW REMOVED ****************/
 
+    /**************** POWWOW ADDED ****************/
+    var splitLocation = window.location.href.split('?');
     return splitLocation[1] ? '?' + splitLocation[1] : '';
+    /**************** POWWOW ADDED ****************/
   }
 
   /**
@@ -546,10 +552,16 @@ var Runtime = class {
    * @param {?Object=} context
    * @return {?Runtime.Extension}
    */
-  extension(type, context) { 
-    //powwow - Select index '1' for the screencastAppProvider b/c of how Runtime is called
-    // but select index '0' for how everything defaults
+  extension(type, context) {
+    /**************** POWWOW REMOVED ****************/
+    // return this.extensions(type, context)[0] || null;
+    /**************** POWWOW REMOVED ****************/
+
+    /**************** POWWOW ADDED ****************/
+    /* Select index '1' for the screencastAppProvider b/c of how Runtime is called
+    /* but select index '0' for how everything defaults */
     return this.extensions(type, context)[1] || this.extensions(type, context)[0] || null;
+    /**************** POWWOW ADDED ****************/
   }
 
   /**
@@ -909,8 +921,10 @@ Runtime.Extension = class {
     if (!(constructorFunction instanceof Function))
       throw new Error('Could not instantiate: ' + className);
     if (this._className) {
+      /**************** POWWOW ADDED ****************/
       if (className === 'Elements.ElementsPanel')
         window.document.dispatchEvent(new CustomEvent('ELEMENTS_PANEL_CONSTRUCTED'));
+      /**************** POWWOW ADDED ****************/
       return this._module._manager.sharedInstance(constructorFunction);
     }
     return new constructorFunction(this);
@@ -1092,19 +1106,19 @@ Runtime.Experiment = class {
   }
 };
 
-window.runtimeInit = function() {
-  {
-    (function parseQueryParameters() {
-      var protocol = window.location.protocol.replace(/^http/, 'ws');
-      protocol = protocol.substring(0, protocol.length - 1);
-      Runtime._queryParamsObject[protocol] = window.getWSUrl();
-      Runtime._queryParamsObject['requestInterceptionUrls'] = window.getRequestInterceptionUrls();
-      Runtime._queryParamsObject['can_dock'] = true;
-      Runtime._queryParamsObject['dock-side'] = 'right';
-      Runtime._queryParamsObject['remoteFrontend'] = true;
-      Runtime._queryParamsObject['experiments'] = true;
-    })();
-  }
+{
+  (function parseQueryParameters() {
+    var queryParams = Runtime.queryParamsString();
+    if (!queryParams)
+      return;
+    var params = queryParams.substring(1).split('&');
+    for (var i = 0; i < params.length; ++i) {
+      var pair = params[i].split('=');
+      var name = pair.shift();
+      Runtime._queryParamsObject[name] = pair.join('=');
+    }
+  })();
+}
 
 // This must be constructed after the query parameters have been parsed.
 Runtime.experiments = new Runtime.ExperimentsSupport();
@@ -1121,6 +1135,7 @@ Runtime._remoteBase;
   }
 })();
 
+
 /**
  * @interface
  */
@@ -1133,19 +1148,18 @@ ServicePort.prototype = {
    * @param {function(string)} closeHandler
    */
   setHandlers(messageHandler, closeHandler) {},
-  
-    /**
-     * @param {string} message
-     * @return {!Promise<boolean>}
-     */
-    send(message) {},
-  
-    /**
-     * @return {!Promise<boolean>}
-     */
-    close() {}
-  };
-  
-  /** @type {!Runtime} */
-  var runtime;
+
+  /**
+   * @param {string} message
+   * @return {!Promise<boolean>}
+   */
+  send(message) {},
+
+  /**
+   * @return {!Promise<boolean>}
+   */
+  close() {}
 };
+
+/** @type {!Runtime} */
+var runtime;

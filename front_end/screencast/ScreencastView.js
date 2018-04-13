@@ -117,7 +117,9 @@ Screencast.ScreencastView = class extends UI.VBox {
       return;
     this._isCasting = true;
 
+    /**************** POWWOW ADDED ****************/
     const maxImageDimension = 5048;
+    /**************** POWWOW ADDED ****************/
     var dimensions = this._viewportDimensions();
     if (dimensions.width < 0 || dimensions.height < 0) {
       this._isCasting = false;
@@ -131,7 +133,9 @@ Screencast.ScreencastView = class extends UI.VBox {
         Math.floor(Math.min(maxImageDimension, dimensions.height)), undefined, this._screencastFrame.bind(this),
         this._screencastVisibilityChanged.bind(this));
     for (var emulationModel of SDK.targetManager.models(SDK.EmulationModel))
+    /**************** POWWOW ADDED ****************/
       emulationModel.overrideEmulateTouch(false); //powwow - prevent mouse->touch translation
+    /**************** POWWOW ADDED ****************/
     if (this._overlayModel)
       this._overlayModel.setHighlighter(this);
   }

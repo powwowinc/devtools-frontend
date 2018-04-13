@@ -295,7 +295,7 @@
     margin-left: -4px;
     flex: none;
 }
-
+/**************** POWWOW ADDED ****************/
 #tab-timeline {
     display: none;
 }
@@ -323,3 +323,4 @@
 .tabbed-pane-right-toolbar.toolbar {
     display: none;
 }
+/**************** POWWOW ADDED ****************/

@@ -344,7 +344,9 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
     if (this._selectedDOMNode === node)
       this._selectedNodeChanged(!!focus);
 
-    if (focus) window.document.dispatchEvent(new CustomEvent('DOM_NODE_SELECTED', { detail: node }));      
+    /**************** POWWOW ADDED ****************/
+    if (focus) window.document.dispatchEvent(new CustomEvent('DOM_NODE_SELECTED', { detail: node }));
+    /**************** POWWOW ADDED ****************/  
   }
 
   /**
@@ -636,7 +638,9 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
       return false;
 
     event.dataTransfer.setData('text/plain', treeElement.listItemElement.textContent.replace(/\u200b/g, ''));
+    /**************** POWWOW ADDED ****************/
     event.dataTransfer.setData('type_devtools/attrs', '');
+    /**************** POWWOW ADDED ****************/
     event.dataTransfer.effectAllowed = 'copyMove';
     this._treeElementBeingDragged = treeElement;
 
@@ -645,9 +649,11 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
     return true;
   }
 
+  /**************** POWWOW ADDED ****************/
   _collectAttributes(callback) {
     return callback(this._selectedDOMNode);
   }
+  /**************** POWWOW ADDED ****************/
 
   _ondragover(event) {
     if (!this._treeElementBeingDragged)

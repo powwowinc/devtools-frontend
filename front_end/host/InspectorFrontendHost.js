@@ -151,7 +151,9 @@ Host.InspectorFrontendHostStub = class {
    * @suppressGlobalPropertiesCheck
    */
   inspectedURLChanged(url) {
+    /**************** POWWOW REMOVED ****************/
     // document.title = Common.UIString('Developer Tools - %s', url);
+    /**************** POWWOW REMOVED ****************/
   }
 
   /**

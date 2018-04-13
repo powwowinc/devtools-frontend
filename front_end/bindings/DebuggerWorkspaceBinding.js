@@ -395,7 +395,7 @@ Bindings.DebuggerWorkspaceBinding.StackTraceTopFrameLocation = class extends Bin
     this._current = null;
     this._locations = rawLocations.map(
         location => binding.createLiveLocation(location, this._scheduleUpdate.bind(this), locationPool));
-    // this._updateLocation();
+    this._updateLocation();
   }
 
   /**
@@ -403,7 +403,7 @@ Bindings.DebuggerWorkspaceBinding.StackTraceTopFrameLocation = class extends Bin
    * @return {?Workspace.UILocation}
    */
   uiLocation() {
-    // return this._current.uiLocation();
+    return this._current.uiLocation();
   }
 
   /**

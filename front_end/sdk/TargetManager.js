@@ -323,6 +323,7 @@ SDK.TargetManager = class extends Common.Object {
     this._connectAndCreateMainTarget();
   }
 
+  /**************** POWWOW ADDED ****************/
   reconnectToMainTarget() { //powwow
     //stop current target screencast before disconnecting ws
     var screencastApp = Screencast.ScreencastApp._instance();
@@ -338,6 +339,7 @@ SDK.TargetManager = class extends Common.Object {
     var capabilities = SDK.Target.Capability.AllForTests;
     var target = this.createTarget('main', Common.UIString('Main'), capabilities, this._createMainConnection.bind(this), null);
   }
+  /**************** POWWOW ADDED ****************/
 
   _connectAndCreateMainTarget() {
     if (Runtime.queryParam('nodeFrontend')) {

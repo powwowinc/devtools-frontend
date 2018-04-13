@@ -17,16 +17,24 @@ UI.RootView = class extends UI.VBox {
    * @param {!Document} document
    */
   attachToDocument(document) {
+    /**************** POWWOW ADDED ****************/
     if (document.defaultView) {
+    /**************** POWWOW ADDED ****************/
       document.defaultView.addEventListener('resize', this.doResize.bind(this), false);
       this._window = document.defaultView;
+    /**************** POWWOW ADDED ****************/
     } else {
       window.document.addEventListener('BOTTOM_PANE_RESIZE', this.doResize.bind(this), false);
       this._window = document;
     }
+    /**************** POWWOW ADDED ****************/
 
     this.doResize();
-
+    /**************** POWWOW REMOVED ****************/
+    // this.show(/** @type {!Element} */ (document.body));
+    /**************** POWWOW REMOVED ****************/
+    
+    /**************** POWWOW ADDED ****************/
     if (document.body) {
       var shadowRoot = document.body.querySelector('#domInspector').shadowRoot;
       var rootDiv = shadowRoot.querySelector('div');
@@ -34,6 +42,7 @@ UI.RootView = class extends UI.VBox {
     } else {
       this.show(/** @type {!Element} */ document);
     }
+    /**************** POWWOW ADDED ****************/
   }
 
   /**

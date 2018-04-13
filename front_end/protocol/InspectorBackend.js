@@ -230,6 +230,9 @@ Protocol.TargetBase = class {
       Protocol.InspectorBackend.deprecatedRunAfterPendingDispatches =
           this._deprecatedRunAfterPendingDispatches.bind(this);
     }
+    /**************** POWWOW REMOVED ****************/
+    // if (!Protocol.InspectorBackend.sendRawMessageForTesting)
+    /**************** POWWOW REMOVED ****************/
     Protocol.InspectorBackend.sendRawMessageForTesting = this._sendRawMessageForTesting.bind(this);
   }
 

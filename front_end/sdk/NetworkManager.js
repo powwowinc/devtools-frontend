@@ -49,10 +49,12 @@ SDK.NetworkManager = class extends SDK.SDKModel {
     else
       this._networkAgent.enable(undefined, undefined, SDK.NetworkManager.MAX_EAGER_POST_REQUEST_BODY_LENGTH);
 
+    /**************** POWWOW ADDED ****************/
     // STUDIO-2501 - Handle security errors.
     var securityAgent = target.securityAgent();
     securityAgent.enable();
     securityAgent.setOverrideCertificateErrors(true);
+    /**************** POWWOW ADDED ****************/
 
     this._bypassServiceWorkerSetting = Common.settings.createSetting('bypassServiceWorker', false);
     if (this._bypassServiceWorkerSetting.get())
@@ -861,7 +863,8 @@ SDK.MultitargetNetworkManager = class extends Common.Object {
     /** @type {!Multimap<!SDK.MultitargetNetworkManager.RequestInterceptor, !SDK.MultitargetNetworkManager.InterceptionPattern>} */
     this._urlsForRequestInterceptor = new Multimap();
 
-    /* POWWOW ADDED - moved from TargetManager STUDIO-2361: Allow www-authentication. */
+    /**************** POWWOW ADDED ****************/
+    // moved from TargetManager STUDIO-2361: Allow www-authentication.
     let requestInterceptionUrls = Runtime.queryParam('requestInterceptionUrls');
     if (requestInterceptionUrls) {
       let arrUrls = requestInterceptionUrls.split('|');
@@ -877,7 +880,7 @@ SDK.MultitargetNetworkManager = class extends Common.Object {
       }
       this.setInterceptionHandlerForPatterns(patterns, window.requestInterceptor);
     }
-    /* POWWOW ADDED */
+    /**************** POWWOW ADDED ****************/
 
     SDK.targetManager.observeTargets(this, SDK.Target.Capability.Network);
   }

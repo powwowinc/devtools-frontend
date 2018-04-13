@@ -92,16 +92,18 @@ SDK.WebSocketConnection = class {
     this._socket.onopen = this._onOpen.bind(this);
     this._socket.onmessage = messageEvent => {
       params.onMessage.call(null, /** @type {string} */ (messageEvent.data));
+      /**************** POWWOW ADDED ****************/
       var msgData = JSON.parse(messageEvent.data);
-      if(msgData.method) { // Don't send event if there is no method.
+      if (msgData.method) { // Don't send event if there is no method.
         var eventName = 'EXPLORER_' + msgData.method;
         var msgParams = {
           detail: {
             params: msgData.params
           }
         };
-        window.document.dispatchEvent(new CustomEvent(eventName, msgParams));  
+        window.document.dispatchEvent(new CustomEvent(eventName, msgParams));
       }
+      /**************** POWWOW ADDED ****************/
     };
     this._socket.onclose = this._onClose.bind(this);
 

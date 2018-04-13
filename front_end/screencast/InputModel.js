@@ -81,9 +81,9 @@ Screencast.InputModel = class extends SDK.SDKModel {
       modifiers: this._modifiersForEvent(event),
       button: buttons[event.which],
       clickCount: 0,
-      /** POWWOW ADDED */
+      /**************** POWWOW ADDED ****************/
       timestamp: Date.now()
-      /** POWWOW ADDED */
+      /**************** POWWOW ADDED ****************/
     };
     if (event.type === 'mousewheel') {
       params.deltaX = event.wheelDeltaX / zoom;
@@ -93,8 +93,10 @@ Screencast.InputModel = class extends SDK.SDKModel {
     }
     if (event.type === 'mouseup')
       this._activeTouchOffsetTop = null;
+    /**************** POWWOW ADDED ****************/
     if (event.type === 'mousedown')
       params.clickCount = 1;
+    /**************** POWWOW ADDED ****************/
     this._inputAgent.invoke_emulateTouchFromMouseEvent(params);
   }
 

@@ -51,7 +51,7 @@ Bindings.CSSWorkspaceBinding = class {
    * @return {!Bindings.CSSWorkspaceBinding.LiveLocation}
    */
   createLiveLocation(rawLocation, updateDelegate, locationPool) {
-    // return this._modelToInfo.get(rawLocation.cssModel())._createLiveLocation(rawLocation, updateDelegate, locationPool);
+    return this._modelToInfo.get(rawLocation.cssModel())._createLiveLocation(rawLocation, updateDelegate, locationPool);
   }
 
   /**

@@ -11,7 +11,9 @@ Screencast.ScreencastApp = class {
     this._enabledSetting = Common.settings.createSetting('screencastEnabled', true);
     this._toggleButton = new UI.ToolbarToggle(Common.UIString('Toggle screencast'), 'largeicon-phone');
     this._toggleButton.setToggled(this._enabledSetting.get());
+    /**************** POWWOW ADDED ****************/
     this._toggleButton.setEnabled(true);
+    /**************** POWWOW ADDED ****************/
     this._toggleButton.addEventListener(UI.ToolbarButton.Events.Click, this._toggleButtonClicked, this);
     SDK.targetManager.observeModels(SDK.ScreenCaptureModel, this);
   }
@@ -19,7 +21,7 @@ Screencast.ScreencastApp = class {
   /**
    * @return {!Screencast.ScreencastApp}
    */
-  static _instance(renewal) {
+  static _instance() {
     if (!Screencast.ScreencastApp._appInstance)
       Screencast.ScreencastApp._appInstance = new Screencast.ScreencastApp();
     return Screencast.ScreencastApp._appInstance;

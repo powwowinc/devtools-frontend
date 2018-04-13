@@ -1365,7 +1365,9 @@ SDK.DOMModel = class extends SDK.SDKModel {
     }
 
     var parent = this._idToDOMNode[parentId];
+    /**************** POWWOW ADDED ****************/
     if (parent)
+    /**************** POWWOW ADDED ****************/
       parent._setChildrenPayload(payloads);
   }
 
