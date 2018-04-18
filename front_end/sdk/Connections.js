@@ -86,10 +86,10 @@ SDK.WebSocketConnection = class {
    * @param {function()} onWebSocketDisconnect
    * @param {!Protocol.InspectorBackend.Connection.Params} params
    */
-  constructor(url, onWebSocketDisconnect, params) {
+  constructor(url, onWebSocketOpen, onWebSocketDisconnect, params) {
     this._socket = new WebSocket(url);
     this._socket.onerror = this._onError.bind(this);
-    this._socket.onopen = this._onOpen.bind(this);
+    this._socket.onopen = this._onOpen.bind(this, null, onWebSocketOpen);
     this._socket.onmessage = messageEvent => {
       params.onMessage.call(null, /** @type {string} */ (messageEvent.data));
       /**************** POWWOW ADDED ****************/
@@ -120,12 +120,15 @@ SDK.WebSocketConnection = class {
     this._close();
   }
 
-  _onOpen() {
+  _onOpen(event, callback /* POWWOW ADDED */) {
     this._socket.onerror = console.error;
     this._connected = true;
     for (var message of this._messages)
       this._socket.send(message);
     this._messages = [];
+    /**************** POWWOW ADDED ****************/
+    if (callback) callback();
+    /**************** POWWOW ADDED ****************/
   }
 
   _onClose() {

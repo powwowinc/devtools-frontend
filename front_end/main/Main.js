@@ -302,13 +302,13 @@ Main.Main = class {
     }
   }
 
-  _reinitializeTarget() {
+  _reinitializeTarget(webSocketConnectionOpened) {
     console.log('started to reinitialize');
     var protocol = window.location.protocol.replace(/^http/, 'ws');
     protocol = protocol.substring(0, protocol.length - 1);
     Runtime._queryParamsObject[protocol] = window.getWSUrl();
     Runtime._queryParamsObject['requestInterceptionUrls'] = window.getRequestInterceptionUrls();
-    SDK.targetManager.reconnectToMainTarget();
+    SDK.targetManager.reconnectToMainTarget(webSocketConnectionOpened);
 
     InspectorFrontendHost.readyForTest();
     // Asynchronously run the extensions.

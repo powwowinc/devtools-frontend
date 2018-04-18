@@ -26,6 +26,10 @@ SDK.TargetManager = class extends Common.Object {
     this._mainConnection;
     /** @type {function()} */
     this._webSocketConnectionLostCallback;
+    /**************** POWWOW ADDED ****************/
+    /** @type {function()} */
+    this._webSocketConnectionOpenCallback;
+    /**************** POWWOW ADDED ****************/
   }
 
   /**
@@ -324,7 +328,7 @@ SDK.TargetManager = class extends Common.Object {
   }
 
   /**************** POWWOW ADDED ****************/
-  reconnectToMainTarget() { //powwow
+  reconnectToMainTarget(webSocketConnectionOpenCallback) { //powwow
     //stop current target screencast before disconnecting ws
     var screencastApp = Screencast.ScreencastApp._instance();
     if (screencastApp._screencastView) screencastApp._screencastView._stopCasting();
@@ -337,6 +341,7 @@ SDK.TargetManager = class extends Common.Object {
 
     //create new target
     var capabilities = SDK.Target.Capability.AllForTests;
+    this._webSocketConnectionOpenCallback = webSocketConnectionOpenCallback;
     var target = this.createTarget('main', Common.UIString('Main'), capabilities, this._createMainConnection.bind(this), null);
   }
   /**************** POWWOW ADDED ****************/
@@ -379,7 +384,7 @@ SDK.TargetManager = class extends Common.Object {
     var wssParam = Runtime.queryParam('wss');
     if (wsParam || wssParam) {
       var ws = wsParam ? `ws://${wsParam}` : `wss://${wssParam}`;
-      this._mainConnection = new SDK.WebSocketConnection(ws, this._webSocketConnectionLostCallback, params);
+      this._mainConnection = new SDK.WebSocketConnection(ws, this._webSocketConnectionOpenCallback, this._webSocketConnectionLostCallback, params);
     } else if (InspectorFrontendHost.isHostedMode()) {
       this._mainConnection = new SDK.StubConnection(params);
     } else {
