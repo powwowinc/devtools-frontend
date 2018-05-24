@@ -230,10 +230,10 @@ Protocol.TargetBase = class {
       Protocol.InspectorBackend.deprecatedRunAfterPendingDispatches =
           this._deprecatedRunAfterPendingDispatches.bind(this);
     }
-    /**************** POWWOW REMOVED ****************/
-    // if (!Protocol.InspectorBackend.sendRawMessageForTesting)
-    /**************** POWWOW REMOVED ****************/
-    Protocol.InspectorBackend.sendRawMessageForTesting = this._sendRawMessageForTesting.bind(this);
+    /**************** POWWOW ADDED ****************/
+    if (connectionFactory.name.includes('_createMainConnection'))
+    /**************** POWWOW ADDED ****************/
+      Protocol.InspectorBackend.sendRawMessageForTesting = this._sendRawMessageForTesting.bind(this);
   }
 
   /**
