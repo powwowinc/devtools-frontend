@@ -89,37 +89,14 @@ var Runtime = class {
         url = parts.join('/');
       }
       if (url === 'InspectorBackendCommands.js' || url === 'SupportedCSSProperties.js') {
-        var domainName = window.location.hostname;
-        var port = window.location.port;
-        var queryParams = Runtime.queryParamsString();
-        if (!queryParams) {
-          url = domainName + (port ? ':' : '') + port + '/' + url + '?commitHash=' + window.explorerData.commitHash;
-        } else {
-          var params = queryParams.substring(1).split('&');
-          for (var i = 0; i < params.length; ++i) {
-            var pair = params[i].split('=');
-            var name = pair.shift();
-            if (name === 'serverPort')
-              url = 'http://' + domainName + ':' + pair.join('=') + '/' + url + '?commitHash=' + window.explorerData.commitHash;
-          }
-        }
-
+        url += '?commitHash=' + window.explorerData.commitHash;
       } else {
-        var env = getParameterByName('env', window.location.href);
+        var port = window.location.port;
+        var env = (!port || port === '80' || port === '443') ? 'production' : 'development';
         if (env === 'development')
           url = 'bower_components/devtools/front_end/' + url;
         else
           url = 'scripts/devtools/' + url;
-
-        function getParameterByName(name, url) {
-          if (!url) url = window.location.href;
-          name = name.replace(/[\[\]]/g, "\\$&");
-          var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-              results = regex.exec(url);
-          if (!results) return null;
-          if (!results[2]) return '';
-          return decodeURIComponent(results[2].replace(/\+/g, " "));
-        }
       }
       /**************** POWWOW ADDED ****************/
 
@@ -200,7 +177,7 @@ var Runtime = class {
         continue;
       urls.push(sourceURL);
       promises.push(Runtime.loadResourcePromise(sourceURL).then(
-          scriptSourceLoaded.bind(null, i), scriptSourceLoaded.bind(null, i, undefined)));
+        scriptSourceLoaded.bind(null, i), scriptSourceLoaded.bind(null, i, undefined)));
     }
     return Promise.all(promises).then(undefined);
 
@@ -239,7 +216,7 @@ var Runtime = class {
    */
   static _loadResourceIntoCache(url, appendSourceURL) {
     return Runtime.loadResourcePromise(url).then(
-        cacheResource.bind(this, url), cacheResource.bind(this, url, undefined));
+      cacheResource.bind(this, url), cacheResource.bind(this, url, undefined));
 
     /**
      * @param {string} path
@@ -356,7 +333,7 @@ var Runtime = class {
   static _experimentsSetting() {
     try {
       return /** @type {!Object} */ (
-          JSON.parse(self.localStorage && self.localStorage['experiments'] ? self.localStorage['experiments'] : '{}'));
+        JSON.parse(self.localStorage && self.localStorage['experiments'] ? self.localStorage['experiments'] : '{}'));
     } catch (e) {
       console.error('Failed to parse localStorage[\'experiments\']');
       return {};
@@ -757,9 +734,9 @@ Runtime.Module = class {
       dependencyPromises.push(this._manager._modulesMap[dependencies[i]]._loadPromise());
 
     this._pendingLoadPromise = Promise.all(dependencyPromises)
-                                   .then(this._loadResources.bind(this))
-                                   .then(this._loadScripts.bind(this))
-                                   .then(() => this._loadedForTest = true);
+      .then(this._loadResources.bind(this))
+      .then(this._loadScripts.bind(this))
+      .then(() => this._loadedForTest = true);
 
     return this._pendingLoadPromise;
   }

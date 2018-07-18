@@ -2,10 +2,9 @@ var allDescriptors=[{"dependencies":[],"name":"platform"},{"dependencies":["plat
 (function(){var baseUrl=self.location?self.location.origin+self.location.pathname:'';self._importScriptPathPrefix=baseUrl.substring(0,baseUrl.lastIndexOf('/')+1);})();var Runtime=class{constructor(descriptors){this._modules=[];this._modulesMap={};this._extensions=[];this._cachedTypeClasses={};this._descriptorsMap={};for(var i=0;i<descriptors.length;++i)
 this._registerModule(descriptors[i]);}
 static loadResourcePromise(url){return new Promise(load);function load(fulfill,reject){var xhr=new XMLHttpRequest();if(url.includes('http')){var parts=url.split('/');parts.shift();parts.shift();parts.shift();url=parts.join('/');}
-if(url==='InspectorBackendCommands.js'||url==='SupportedCSSProperties.js'){var domainName=window.location.hostname;var port=window.location.port;var queryParams=Runtime.queryParamsString();if(!queryParams){url=domainName+(port?':':'')+port+'/'+url+'?commitHash='+window.explorerData.commitHash;}else{var params=queryParams.substring(1).split('&');for(var i=0;i<params.length;++i){var pair=params[i].split('=');var name=pair.shift();if(name==='serverPort')
-url='http://'+domainName+':'+pair.join('=')+'/'+url+'?commitHash='+window.explorerData.commitHash;}}}else{var env=getParameterByName('env',window.location.href);if(env==='development')
+if(url==='InspectorBackendCommands.js'||url==='SupportedCSSProperties.js'){url+='?commitHash='+window.explorerData.commitHash;}else{let port=window.location.port;var env=(!port||port==='80'||port==='443')?'production':'development';if(env==='development')
 url='bower_components/devtools/front_end/'+url;else
-url='scripts/devtools/'+url;function getParameterByName(name,url){if(!url)url=window.location.href;name=name.replace(/[\[\]]/g,"\\$&");var regex=new RegExp("[?&]"+name+"(=([^&#]*)|&|#|$)"),results=regex.exec(url);if(!results)return null;if(!results[2])return'';return decodeURIComponent(results[2].replace(/\+/g," "));}}
+url='scripts/devtools/'+url;}
 xhr.open('GET',url,true);xhr.onreadystatechange=onreadystatechange;function onreadystatechange(e){if(xhr.readyState!==XMLHttpRequest.DONE)
 return;if([0,200,304].indexOf(xhr.status)===-1)
 reject(new Error('While loading from url '+url+' server responded with a status of '+xhr.status));else
