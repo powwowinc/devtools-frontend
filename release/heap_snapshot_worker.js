@@ -2,7 +2,7 @@ var allDescriptors=[{"dependencies":[],"name":"heap_snapshot_model"},{"dependenc
 (function(){var baseUrl=self.location?self.location.origin+self.location.pathname:'';self._importScriptPathPrefix=baseUrl.substring(0,baseUrl.lastIndexOf('/')+1);})();var Runtime=class{constructor(descriptors){this._modules=[];this._modulesMap={};this._extensions=[];this._cachedTypeClasses={};this._descriptorsMap={};for(var i=0;i<descriptors.length;++i)
 this._registerModule(descriptors[i]);}
 static loadResourcePromise(url){return new Promise(load);function load(fulfill,reject){var xhr=new XMLHttpRequest();if(url.includes('http')){var parts=url.split('/');parts.shift();parts.shift();parts.shift();url=parts.join('/');}
-if(url==='InspectorBackendCommands.js'||url==='SupportedCSSProperties.js'){url+='?commitHash='+window.explorerData.commitHash;}else{let port=window.location.port;var env=(!port||port==='80'||port==='443')?'production':'development';if(env==='development')
+if(url==='InspectorBackendCommands.js'||url==='SupportedCSSProperties.js'){url+='?commitHash='+window.explorerData.commitHash;}else{if(window.explorerData.env==='development')
 url='bower_components/devtools/front_end/'+url;else
 url='scripts/devtools/'+url;}
 xhr.open('GET',url,true);xhr.onreadystatechange=onreadystatechange;function onreadystatechange(e){if(xhr.readyState!==XMLHttpRequest.DONE)

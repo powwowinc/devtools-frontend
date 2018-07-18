@@ -91,9 +91,7 @@ var Runtime = class {
       if (url === 'InspectorBackendCommands.js' || url === 'SupportedCSSProperties.js') {
         url += '?commitHash=' + window.explorerData.commitHash;
       } else {
-        var port = window.location.port;
-        var env = (!port || port === '80' || port === '443') ? 'production' : 'development';
-        if (env === 'development')
+        if (window.explorerData.env === 'development')
           url = 'bower_components/devtools/front_end/' + url;
         else
           url = 'scripts/devtools/' + url;
