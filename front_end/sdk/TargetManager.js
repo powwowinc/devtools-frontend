@@ -328,7 +328,7 @@ SDK.TargetManager = class extends Common.Object {
   }
 
   /**************** POWWOW ADDED ****************/
-  reconnectToMainTarget(webSocketConnectionOpenCallback) { //powwow
+  reconnectToMainTarget(webSocketConnectionOpenCallback, webSocketConnectionLostCallback) { //powwow
     //stop current target screencast before disconnecting ws
     var screencastApp = Screencast.ScreencastApp._instance();
     if (screencastApp._screencastView) screencastApp._screencastView._stopCasting();
@@ -342,6 +342,7 @@ SDK.TargetManager = class extends Common.Object {
     //create new target
     var capabilities = SDK.Target.Capability.AllForTests;
     this._webSocketConnectionOpenCallback = webSocketConnectionOpenCallback;
+    this._webSocketConnectionLostCallback = webSocketConnectionLostCallback;
     var target = this.createTarget('main', Common.UIString('Main'), capabilities, this._createMainConnection.bind(this), null);
   }
   /**************** POWWOW ADDED ****************/
