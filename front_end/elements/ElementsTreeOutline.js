@@ -1225,9 +1225,11 @@ Elements.ElementsTreeOutline = class extends UI.TreeOutline {
 
     if (node.childNodeCount()) {
       var children = node.children();
-      if (!this._showHTMLCommentsSetting.get())
-        children = children.filter(n => n.nodeType() !== Node.COMMENT_NODE);
-      visibleChildren = visibleChildren.concat(children);
+      if(children) {
+        if (!this._showHTMLCommentsSetting.get())
+          children = children.filter(n => n.nodeType() !== Node.COMMENT_NODE);
+        visibleChildren = visibleChildren.concat(children);
+      }
     }
 
     var afterPseudoElement = node.afterPseudoElement();
