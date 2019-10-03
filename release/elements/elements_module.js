@@ -584,8 +584,8 @@ _visibleChildren(node){var visibleChildren=Elements.ElementsTreeElement.visibleS
 visibleChildren.push(contentDocument);var importedDocument=node.importedDocument();if(importedDocument)
 visibleChildren.push(importedDocument);var templateContent=node.templateContent();if(templateContent)
 visibleChildren.push(templateContent);var beforePseudoElement=node.beforePseudoElement();if(beforePseudoElement)
-visibleChildren.push(beforePseudoElement);if(node.childNodeCount()){var children=node.children();if(!this._showHTMLCommentsSetting.get())
-children=children.filter(n=>n.nodeType()!==Node.COMMENT_NODE);visibleChildren=visibleChildren.concat(children);}
+visibleChildren.push(beforePseudoElement);if(node.childNodeCount()){var children=node.children();if(children){if(!this._showHTMLCommentsSetting.get())
+children=children.filter(n=>n.nodeType()!==Node.COMMENT_NODE);visibleChildren=visibleChildren.concat(children);}}
 var afterPseudoElement=node.afterPseudoElement();if(afterPseudoElement)
 visibleChildren.push(afterPseudoElement);return visibleChildren;}
 _hasVisibleChildren(node){if(node.isIframe()&&Runtime.experiments.isEnabled('oopifInlineDOM'))
