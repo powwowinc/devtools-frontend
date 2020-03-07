@@ -87,9 +87,6 @@ class Runtime {
       if (url === 'InspectorBackendCommands.js' || url === 'SupportedCSSProperties.js') {
         url += '?commitHash=' + window.explorerData.commitHash;
       } else {
-        if (window.explorerData.env === 'development')
-          url = 'bower_components/devtools/front_end/' + url;
-        else
           url = 'scripts/devtools/' + url;
       }
       /**************** POWWOW ADDED ****************/
