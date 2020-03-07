@@ -87,6 +87,9 @@ class Runtime {
       if (url === 'InspectorBackendCommands.js' || url === 'SupportedCSSProperties.js') {
         url += '?commitHash=' + window.explorerData.commitHash;
       } else {
+        if (window.explorerData.env === 'development')
+          url = 'bower_components/devtools/smartux-build/inspector/' + url;
+        else
           url = 'scripts/devtools/' + url;
       }
       /**************** POWWOW ADDED ****************/
