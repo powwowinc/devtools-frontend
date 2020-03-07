@@ -79,6 +79,9 @@ export class MainImpl {
     Root.Runtime.setPlatform(Host.Platform.platform());
     Root.Runtime.setL10nCallback(ls);
     Host.InspectorFrontendHost.InspectorFrontendHostInstance.getPreferences(this._gotPreferences.bind(this));
+    /**************** POWWOW ADDED ****************/
+    window.document.dispatchEvent(new CustomEvent('MAIN_LOADED'));
+    /**************** POWWOW ADDED ****************/
   }
 
   /**
@@ -199,7 +202,7 @@ export class MainImpl {
     UI.UIUtils.initializeUIUtils(document, themeSetting);
     themeSetting.addChangeListener(Components.Reload.reload.bind(Components));
 
-    UI.UIUtils.installComponentRootStyles(/** @type {!Element} */ (document.body));
+    UI.UIUtils.installComponentRootStyles(/** @type {!Element} */ (document.getElementById('domInspector')));
 
     this._addMainEventListeners(document);
 

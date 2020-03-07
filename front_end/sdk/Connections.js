@@ -100,15 +100,28 @@ export class WebSocketConnection {
   /**
    * @param {string} url
    * @param {function()} onWebSocketDisconnect
+   * @param {function()} onWebSocketOpen
    */
-  constructor(url, onWebSocketDisconnect) {
+  constructor(url, onWebSocketDisconnect, onWebSocketOpen /* POWWOW */) {
     this._socket = new WebSocket(url);
     this._socket.onerror = this._onError.bind(this);
-    this._socket.onopen = this._onOpen.bind(this);
+    this._socket.onopen = this._onOpen.bind(this, onWebSocketOpen /* POWWOW */);
     this._socket.onmessage = messageEvent => {
       if (this._onMessage) {
         this._onMessage.call(null, /** @type {string} */ (messageEvent.data));
       }
+      /**************** POWWOW ADDED ****************/
+      let msgData = JSON.parse(messageEvent.data);
+      if (msgData.method) { // Don't send event if there is no method.
+        let eventName = 'EXPLORER_' + msgData.method;
+        let msgParams = {
+          detail: {
+            params: msgData.params
+          }
+        };
+        window.document.dispatchEvent(new CustomEvent(eventName, msgParams));
+      }
+      /**************** POWWOW ADDED ****************/
     };
     this._socket.onclose = this._onClose.bind(this);
 
@@ -142,13 +155,19 @@ export class WebSocketConnection {
     this._close();
   }
 
-  _onOpen() {
+  /**
+   * @param {function()} callback
+   */
+  _onOpen(callback /* POWWOW */) {
     this._socket.onerror = console.error;
     this._connected = true;
     for (const message of this._messages) {
       this._socket.send(message);
     }
     this._messages = [];
+    /**************** POWWOW ADDED ****************/
+    if (callback) callback();
+    /**************** POWWOW ADDED ****************/
   }
 
   _onClose() {
@@ -322,10 +341,11 @@ export class ParallelConnection {
 /**
  * @param {function():!Promise<undefined>} createMainTarget
  * @param {function()} websocketConnectionLost
+ * @param {function()} websocketConnectionOpen
  * @return {!Promise}
  */
-export async function initMainConnection(createMainTarget, websocketConnectionLost) {
-  ProtocolModule.InspectorBackend.Connection.setFactory(_createMainConnection.bind(null, websocketConnectionLost));
+export async function initMainConnection(createMainTarget, websocketConnectionLost, websocketConnectionOpen /*POWWOW*/) {
+  ProtocolModule.InspectorBackend.Connection.setFactory(_createMainConnection.bind(null, websocketConnectionLost, websocketConnectionOpen));
   await createMainTarget();
   Host.InspectorFrontendHost.InspectorFrontendHostInstance.connectionReady();
   Host.InspectorFrontendHost.InspectorFrontendHostInstance.events.addEventListener(
@@ -338,14 +358,15 @@ export async function initMainConnection(createMainTarget, websocketConnectionLo
 
 /**
  * @param {function()} websocketConnectionLost
+ * @param {function()} websocketConnectionOpen
  * @return {!ProtocolModule.InspectorBackend.Connection}
  */
-export function _createMainConnection(websocketConnectionLost) {
+export function _createMainConnection(websocketConnectionLost, websocketConnectionOpen /*POWWOW*/) {
   const wsParam = Root.Runtime.queryParam('ws');
   const wssParam = Root.Runtime.queryParam('wss');
   if (wsParam || wssParam) {
     const ws = wsParam ? `ws://${wsParam}` : `wss://${wssParam}`;
-    return new WebSocketConnection(ws, websocketConnectionLost);
+    return new WebSocketConnection(ws, websocketConnectionLost, websocketConnectionOpen /*POWWOW*/);
   }
   if (Host.InspectorFrontendHost.InspectorFrontendHostInstance.isHostedMode()) {
     return new StubConnection();
