@@ -1,5 +1,10 @@
 # Chrome DevTools frontend
 
+## With PowWow changes for SmartUX Explorer.
+SmartUX Explorer uses Chrome DevTools to allow for interacting and transforming existing web applications.
+This fork has PowWow specific modifications.  If any changes are made, please add a new tag, and update
+the tag in the PowwowDesigner repo to pick up the changes in the next build.
+
 <!-- [START badges] -->
 [![NPM package](https://img.shields.io/npm/v/chrome-devtools-frontend.svg)](https://npmjs.org/package/chrome-devtools-frontend)
 <!-- [END badges] -->

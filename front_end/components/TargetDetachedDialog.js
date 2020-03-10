@@ -27,12 +27,18 @@ export class TargetDetachedDialog extends SDK.SDKModel {
    * @param {string} reason
    */
   detached(reason) {
-    TargetDetachedDialog._disconnectedScreenWithReasonWasShown = true;
-    UI.RemoteDebuggingTerminatedScreen.RemoteDebuggingTerminatedScreen.show(reason);
+    /**************** POWWOW REMOVED ****************/
+    // TargetDetachedDialog._disconnectedScreenWithReasonWasShown = true;
+    // UI.RemoteDebuggingTerminatedScreen.RemoteDebuggingTerminatedScreen.show(reason);
+    console.log("DevTools: Target was detached, reason =", reason);
+    /**************** POWWOW REMOVED ****************/
   }
 
   static webSocketConnectionLost() {
-    UI.RemoteDebuggingTerminatedScreen.RemoteDebuggingTerminatedScreen.show(ls`WebSocket disconnected`);
+    /**************** POWWOW REMOVED ****************/
+    // UI.RemoteDebuggingTerminatedScreen.RemoteDebuggingTerminatedScreen.show(ls`WebSocket disconnected`);
+    console.log("DevTools: Target was detached - WebSocket disconnected");
+    /**************** POWWOW REMOVED ****************/
   }
 
   /**
