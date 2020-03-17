@@ -20,7 +20,6 @@
 config.gypi
 karma-coverage
 npm-debug.log
-.history/
 
 # These are generated for build and would be put in the symlinked folder (thus this folder)
 /front_end/InspectorBackendCommands.js
@@ -50,3 +49,11 @@ test/screenshots/.generated
 test/perf/.generated
 test/perf/**/*.js
 test/perf/**/*.tsbuildinfo
+
+# Added by PowWow
+.history/
+smartux-build/.gclient
+smartux-build/.gclient_entries
+smartux-build/.cipd
+smartux-build/devtools-frontend/
+smartux-build/depot_tools/

@@ -78,7 +78,7 @@
 .cm-hr {color: #999;}
 .cm-link{color:rgb(159, 180, 214);}
 
-:root {
+#domInspector :root {
     --dom-tag-name-color: rgb(93, 176, 215);
     --dom-attribute-name-color: rgb(155, 187, 220);
 }

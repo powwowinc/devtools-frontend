@@ -2126,7 +2126,6 @@ generated_applications = [
 generated_non_autostart_non_remote_modules = [
   "$resources_out_dir/accessibility/accessibility_module.js",
   "$resources_out_dir/animation/animation_module.js",
-  "$resources_out_dir/lighthouse/lighthouse_module.js",
   "$resources_out_dir/browser_debugger/browser_debugger_module.js",
   "$resources_out_dir/changes/changes_module.js",
   "$resources_out_dir/cm_modes/cm_modes_module.js",

@@ -6,7 +6,6 @@
 
     { "name": "accessibility_test_runner" },
     { "name": "application_test_runner" },
-    { "name": "lighthouse_test_runner" },
     { "name": "axe_core_test_runner"},
     { "name": "bindings_test_runner" },
     { "name": "console_test_runner" },

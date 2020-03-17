@@ -29,9 +29,14 @@ fi
 echo "* Adding depot tools to the path"
 export PATH=$PWD/depot_tools:$PATH
 
-if [ "$1" = "debug" ] && [ ! -d "$PWD/devtools-frontend" ]; then
-  echo "* Fetching the devtools-frontend (with history)"
-  fetch devtools-frontend
+if [ "$1" = "debug" ]; then
+  if [ ! -d "$PWD/devtools-frontend" ]; then
+    echo "* Fetching the devtools-frontend (with history)"
+    fetch devtools-frontend
+  else
+    echo "* Copying over any changes to build folder"
+    rsync -i -r ../front_end devtools-frontend/
+  fi
 elif [ "$1" = "release" ] ; then
   echo "* Fetching the devtools-frontend (without history so it downloads faster)"
   fetch --no-history devtools-frontend
