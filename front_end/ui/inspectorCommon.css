@@ -42,24 +42,24 @@
     white-space: pre-wrap;
 }
 
-#domInspector * {
+* {
     box-sizing: border-box;
 }
 
-#domInspector :focus {
+:focus {
     outline-width: 0;
 }
 
-/* #domInspector input[type=radio]:focus {
+/* input[type=radio]:focus {
     outline: auto 5px -webkit-focus-ring-color;
 } */
 
-#domInspector img {
+img {
     -webkit-user-drag: none;
 }
 
-#domInspector iframe,
-#domInspector a img {
+iframe,
+a img {
     border: none;
 }
 
@@ -153,24 +153,24 @@ iframe.widget {
     color: rgb(17, 85, 204);
 }
 
-#domInspector button,
-#domInspector input,
-#domInspector select {
+button,
+input,
+select {
     /* Form elements do not automatically inherit font style from ancestors. */
     font-family: inherit;
     font-size: inherit;
 }
 
-#domInspector input {
+input {
     background-color: white;
     color: inherit;
 }
 
-#domInspector input::placeholder {
+input::placeholder {
     color: rgba(0, 0, 0, 0.54);
 }
 
-#domInspector :host-context(.-theme-with-dark-background) input[type="checkbox"]:not(.-theme-preserve) {
+:host-context(.-theme-with-dark-background) input[type="checkbox"]:not(.-theme-preserve) {
     -webkit-filter: invert(80%);
 }
 
@@ -320,7 +320,7 @@ iframe.widget {
     white-space: nowrap;
 }
 
-#domInspector span[is=dt-icon-label] {
+span[is=dt-icon-label] {
     flex: none;
 }
 
@@ -346,7 +346,7 @@ iframe.widget {
     z-index: 500;
 }
 
-#domInspector [is=ui-icon] {
+[is=ui-icon] {
     display: inline-block;
     flex-shrink: 0;
 }
@@ -455,13 +455,13 @@ iframe.widget {
     background-color: #9e9e9e;
 }
 
-#domInspector button.link {
+button.link {
     border: none;
     background: none;
     padding: 3px;
 }
 
-#domInspector button.link[data-keyboard-focus="true"]:focus {
+button.link[data-keyboard-focus="true"]:focus {
     background-color: rgba(0, 0, 0, 0.08);
     border-radius: 2px;
 }

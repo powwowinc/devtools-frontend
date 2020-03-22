@@ -27,12 +27,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- #domInspector {
+:root {
     height: 100%;
     overflow: hidden;
 }
 
-#domInspector {
+:root {
     --accent-color: #1a73e8;
     --accent-fg-color: #1a73e8;
     --accent-color-hover: #3b86e8;
@@ -56,7 +56,7 @@
     --item-selection-inactive-bg-color: #e0e0e0;
 }
 
-#domInspector .-theme-with-dark-background {
+.-theme-with-dark-background {
     --accent-color: #0e639c;
     --accent-fg-color: #cccccc;
     --accent-color-hover: rgb(17, 119, 187);
@@ -79,14 +79,14 @@
     --item-selection-inactive-bg-color: #454545;
 }
 
-#domInspector :root {
+:root {
     --focus-ring-active-shadow: 0 0 0 1px var(--accent-color);
     --selection-bg-color: var(--accent-color);
     --divider-border: 1px solid var(--divider-color);
     --item-hover-color: rgba(56, 121, 217, 0.1);
 }
 
-#domInspector {
+body {
     height: 100%;
     width: 100%;
     position: relative;
@@ -144,7 +144,7 @@ iframe.panel.extension {
 }
 
 @media (forced-colors: active) {
-    #domInspector {
+    :root {
         --accent-color: Highlight;
         --focus-ring-inactive-shadow-color: ButtonText
     }

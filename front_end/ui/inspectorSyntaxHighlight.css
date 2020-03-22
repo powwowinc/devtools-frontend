@@ -56,7 +56,7 @@
 .cm-xml-attribute {color: rgb(153, 69, 0);}
 .cm-xml-link {color: #00e;}
 
-#domInspector :root {
+:root {
     --dom-tag-name-color: rgb(136, 18, 128);
     --dom-attribute-name-color: rgb(153, 69, 0);
 }
